@@ -1,0 +1,117 @@
+{
+ "years": {
+  "2006": {
+   "features": 2,
+   "byCat": {
+    "building": 2
+   },
+   "roadKm": 0.0,
+   "builtM2": 2621
+  },
+  "2011": {
+   "features": 281,
+   "byCat": {
+    "gate": 4,
+    "lecture": 2,
+    "faculty": 5,
+    "housing": 1,
+    "construction": 5,
+    "service": 1,
+    "farm": 1,
+    "pole": 237,
+    "road": 25
+   },
+   "roadKm": 25.7,
+   "builtM2": 41021
+  },
+  "2016": {
+   "features": 686,
+   "byCat": {
+    "pole": 469,
+    "gate": 3,
+    "road": 98,
+    "boundary": 1,
+    "faculty": 21,
+    "building": 67,
+    "parking": 7,
+    "mosque": 2,
+    "service": 1,
+    "construction": 1,
+    "farm": 3,
+    "housing": 13
+   },
+   "roadKm": 30.5,
+   "builtM2": 96604
+  },
+  "2021": {
+   "features": 545,
+   "byCat": {
+    "canopy": 152,
+    "caravan": 6,
+    "pole": 240,
+    "green": 45,
+    "faculty": 14,
+    "road": 47,
+    "parking": 5,
+    "housing": 13,
+    "construction": 3,
+    "lecture": 5,
+    "service": 2,
+    "cafe": 2,
+    "kiosk": 4,
+    "admin": 4,
+    "sports": 3
+   },
+   "roadKm": 23.9,
+   "builtM2": 107481
+  },
+  "2026": {
+   "features": 2525,
+   "byCat": {
+    "canopy": 195,
+    "pole": 1856,
+    "parking": 25,
+    "mosque": 12,
+    "lecture": 8,
+    "admin": 4,
+    "caravan": 12,
+    "kiosk": 5,
+    "cafe": 5,
+    "power": 33,
+    "service": 2,
+    "faculty": 13,
+    "construction": 3,
+    "housing": 13,
+    "sports": 4,
+    "gate": 5,
+    "farm": 140,
+    "road": 190
+   },
+   "roadKm": 70.5,
+   "builtM2": 109828
+  }
+ },
+ "categories": {
+  "faculty": "كليات",
+  "admin": "مبانٍ إدارية",
+  "housing": "سكن",
+  "lecture": "مدرجات",
+  "mosque": "مساجد",
+  "service": "خدمات",
+  "kiosk": "أكشاك خدمات",
+  "cafe": "كافتيريات",
+  "caravan": "كرفانات",
+  "construction": "تحت الإنشاء",
+  "sports": "ملاعب",
+  "parking": "مواقف",
+  "green": "مساحات خضراء",
+  "farm": "زراعة",
+  "canopy": "مظلات",
+  "building": "مبانٍ أخرى",
+  "boundary": "حدود",
+  "pole": "أعمدة إنارة",
+  "power": "أكشاك كهرباء",
+  "gate": "بوابات",
+  "road": "طرق"
+ }
+}
