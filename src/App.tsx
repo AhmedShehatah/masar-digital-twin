@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'
-import { Search, Layers, BarChart3, Moon, Sun, Clapperboard, Navigation } from 'lucide-react'
+import { AnimatePresence } from 'motion/react'
+import { Search, Layers, BarChart3, Moon, Sun, Clapperboard, Navigation, Images } from 'lucide-react'
 import { CampusEngine } from './map/engine'
 import {
   YEARS, loadYear, loadProfiles, loadStats, centroid, norm,
@@ -17,6 +18,7 @@ import { Film, type FilmCtx } from './components/Film'
 import { Assistant } from './components/Assistant'
 import { CompareView, CompareBar } from './components/Compare'
 import { Directions, endpointFor, type Endpoint } from './components/Directions'
+import { Gallery } from './components/Gallery'
 import type { Intent, RouteTarget } from './voice/intents'
 
 type Phase = 'loading' | 'intro' | 'arrive' | 'ready'
@@ -43,6 +45,7 @@ export default function App() {
   const [touring, setTouring] = useState(false)
   const [playing, setPlaying] = useState(false)
   const [compare, setCompare] = useState<Year | null>(null)
+  const [gallery, setGallery] = useState(() => new URLSearchParams(location.search).has('gallery'))
   const [narrow, setNarrow] = useState(() => window.innerWidth < 860)
   useEffect(() => {
     const on = () => setNarrow(window.innerWidth < 860)
@@ -233,6 +236,11 @@ export default function App() {
     setTouring(true)
   }, [])
 
+  const openGallery = useCallback(() => {
+    setSel(null); setPanel(null); setPlaying(false); setSearchOpen(false); setTouring(false)
+    setGallery(true)
+  }, [])
+
   const onIntent = useCallback((i: Intent) => {
     switch (i.kind) {
       case 'goto':
@@ -276,7 +284,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', h)
   }, [searchOpen, touring])
 
-  const ready = phase === 'ready' && !touring
+  const ready = phase === 'ready' && !touring && !gallery
   const hoverName = hover && (hover.f.properties.p ? profileMap.get(hover.f.properties.p as string)?.name : (hover.f.properties.n as string | undefined))
 
   return (
@@ -306,6 +314,9 @@ export default function App() {
         <div className="tools glass">
           <button className={`tool ${dir ? 'on' : ''}`} onClick={() => (dir ? setDir(null) : openDirections())} title="أقصر طريق بين نقطتين">
             <Navigation size={17} /><span className="lbl-t">اتجاهات</span>
+          </button>
+          <button className="tool gallery-btn" onClick={openGallery} title="معرض الخرائط: أطلس سينمائي لخرائط الحرم">
+            <Images size={17} /><span className="lbl-t">المعرض</span>
           </button>
           <button className="tool film-btn" onClick={startFilm} title="الفيلم: جولة سينمائية بالموسيقى والترجمة">
             <Clapperboard size={17} /><span className="lbl-t">شاهد الفيلم</span>
@@ -386,6 +397,10 @@ export default function App() {
       {ready && (
         <Assistant hidden={!!compare || (narrow && (!!panel || !!sel || !!dir))} onIntent={onIntent} ctx={{ profiles, data, stats, year }} />
       )}
+
+      <AnimatePresence>
+        {phase === 'ready' && gallery && <Gallery onClose={() => setGallery(false)} />}
+      </AnimatePresence>
 
       {searchOpen && (
         <SearchPalette profiles={profiles} data={data} year={year} onPick={onSearch} onClose={() => setSearchOpen(false)} />
