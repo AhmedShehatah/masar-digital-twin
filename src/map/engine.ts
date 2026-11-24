@@ -3,6 +3,10 @@ import { type Map as MLMap, type StyleSpecification, type ExpressionSpecificatio
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { CAMPUS_CENTER, CAT_META, EXTRUDED, type Campus, type CampusFeature, type Cat, type RasterFrame, type VectorLayer } from '../data'
 import { AnalysisLayers } from './analysis'
+import { MODELLED, MODELLED_CATS } from './models'
+import type { Buildings3D } from './buildings3d'
+
+const isModelled: ExpressionSpecification = ['any', ['in', ['get', 'p'], ['literal', MODELLED]], ['in', ['get', 'c'], ['literal', MODELLED_CATS]]]
 
 maplibregl.setWorkerUrl(workerUrl)
 
@@ -118,6 +122,17 @@ function buildStyle(): StyleSpecification {
         },
       },
       {
+        // invisible stand-in for buildings drawn as 3D models, so they can still be hovered and picked
+        id: 'model-hit', type: 'fill-extrusion', source: 'campus',
+        filter: ['all', isPoly, isModelled, notHidden],
+        layout: { visibility: 'none' },
+        paint: {
+          'fill-extrusion-color': '#000000',
+          'fill-extrusion-height': ['*', ['coalesce', ['get', 'h'], 10], ['global-state', 'grow']],
+          'fill-extrusion-opacity': 0,
+        },
+      },
+      {
         id: 'buildings-hover', type: 'line', source: 'campus',
         filter: ['all', isPoly, isCat(...EXTRUDED), notHidden],
         paint: {
@@ -230,6 +245,7 @@ export class CampusEngine {
       if (this.isLoaded) return
       this.isLoaded = true
       if (this.pendingHidden) this.setHidden(this.pendingHidden)
+      this.loadModels()
       this.readyWaiters.forEach((r) => r())
       this.readyWaiters = []
     }
@@ -257,7 +273,7 @@ export class CampusEngine {
 
   private bind() {
     const m = this.map
-    const layers = ['buildings']
+    const layers = ['buildings', 'model-hit']
     m.on('mousemove', (e) => {
       const f = m.queryRenderedFeatures(e.point, { layers })[0] as unknown as CampusFeature | undefined
       const id = (f?.properties?.id as string) || null
@@ -308,7 +324,27 @@ export class CampusEngine {
   }
 
   setData(fc: Campus) {
+    this.lastData = fc
     ;(this.map.getSource('campus') as maplibregl.GeoJSONSource).setData(fc)
+    this.models?.setData(fc)
+  }
+
+  // ---------- detailed 3D models (three.js, loaded on demand) ----------
+  private models: Buildings3D | null = null
+  private lastData: Campus | null = null
+
+  private async loadModels() {
+    const { Buildings3D } = await import('./buildings3d')
+    const models = new Buildings3D(this.map)
+    // above the ground outline of hovered / selected buildings, so the outline never cuts across a facade
+    this.map.addLayer(models.layer, 'points-halo')
+    // swap the plain block for the model, keeping an invisible copy for picking
+    this.map.setFilter('buildings', ['all', isPoly, isCat(...EXTRUDED), notHidden, ['!', isModelled]])
+    this.map.setLayoutProperty('model-hit', 'visibility', 'visible')
+    models.setNight(this.night)
+    models.setHidden((this.map.getGlobalState().hidden as string[] | undefined) ?? [])
+    if (this.lastData) models.setData(this.lastData)
+    this.models = models
   }
 
   async showYear(fc: Campus, animate = true) {
@@ -327,6 +363,7 @@ export class CampusEngine {
   setHidden(hidden: Cat[]) {
     if (!this.isLoaded) { this.pendingHidden = hidden; return }
     this.map.setGlobalStateProperty('hidden', hidden)
+    this.models?.setHidden(hidden)
   }
 
   setNight(night: boolean) {
@@ -341,6 +378,7 @@ export class CampusEngine {
     m.setPaintProperty('road-glow', 'line-opacity', ['*', night ? 0.45 : 0.12, ['global-state', 'grow']])
     m.setPaintProperty('road', 'line-color', night ? '#bdf0ff' : '#ffffff')
     m.setPaintProperty('buildings', 'fill-extrusion-opacity', night ? 0.9 : 0.94)
+    this.models?.setNight(night)
     m.setSky(night
       ? { 'sky-color': '#061024', 'horizon-color': '#1d3a6b', 'fog-color': '#0a1530', 'fog-ground-blend': 0.4, 'horizon-fog-blend': 0.6, 'sky-horizon-blend': 0.6, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 9, 0.8, 13, 0] }
       : { 'sky-color': '#7cc4ff', 'horizon-color': '#f3e3c3', 'fog-color': '#f5ead2', 'fog-ground-blend': 0.5, 'horizon-fog-blend': 0.4, 'sky-horizon-blend': 0.5, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 9, 0.8, 13, 0] })

@@ -34,7 +34,7 @@ export default function App() {
   const [data, setData] = useState<Partial<Record<Year, Campus>>>({})
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
-  const [night, setNight] = useState(true)
+  const [night, setNight] = useState(false) // light (day) mode by default; the moon button switches to night
   const [hidden, setHidden] = useState<Cat[]>([])
   const [analysis, setAnalysis] = useState<AnalysisIndex | null>(null)
   const [ana, setAna] = useState<AnalysisState>(ANALYSIS_OFF)
@@ -97,7 +97,7 @@ export default function App() {
       setData((d) => ({ ...d, 2026: fc }))
       eng.setData(fc)
       if (new URLSearchParams(location.search).has('skip')) {
-        eng.skipIntro(); eng.setNight(true); setPhase('ready')
+        eng.skipIntro(); eng.setNight(false); setPhase('ready')
       } else {
         setPhase('intro')
         eng.intro(() => setPhase('arrive')).then(() => {

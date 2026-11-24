@@ -10,11 +10,13 @@
     "data": ".venv/bin/python -W ignore scripts/build_data.py && .venv/bin/python -W ignore scripts/build_analysis.py"
   },
   "dependencies": {
+    "@types/three": "^0.180.0",
     "lucide-react": "^1.72.0",
     "maplibre-gl": "^6.18.0",
     "motion": "^14.13.0",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "three": "^0.180.0"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
