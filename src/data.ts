@@ -66,7 +66,7 @@ export const EXTRUDED: Cat[] = ['faculty', 'lecture', 'admin', 'housing', 'mosqu
 export const YEAR_STORY: Record<Year, { title: string; line: string }> = {
   2006: { title: 'البداية', line: 'أرض صحراوية وأول حدود مرسومة للموقع.' },
   2011: { title: 'أول الكليات', line: 'التربية والآداب والتجارة والهندسة ترتفع، وأول 237 عمود إنارة.' },
-  2016: { title: 'مدينة جامعية', line: 'إحدى عشرة عمارة سكنية للطلاب، ومسجد، وشبكة طرق 30 كم.' },
+  2016: { title: 'مدينة جامعية', line: 'إحدى عشرة عمارة سكنية للطلاب، ومسجد، وشبكة طرق 32 كم.' },
   2021: { title: 'حرم يتنفس', line: 'مظلات ومساحات خضراء وكرفانات وخدمات للطلاب.' },
   2026: { title: 'التوأم الرقمي', line: '1,856 عمود إنارة، 70 كم طرق، ومزرعة كلية الزراعة.' },
 }
@@ -90,6 +90,32 @@ function rankLights(fc: Campus): Campus {
   pts.forEach((f) => (f.properties.r = d(f) / max))
   return fc
 }
+
+// ---------- spatial analysis layers (built by scripts/build_analysis.py) ----------
+export type Season = 'winter' | 'spring' | 'summer' | 'autumn'
+export const SEASON_LABEL: Record<Season, string> = { winter: 'شتاء', spring: 'ربيع', summer: 'صيف', autumn: 'خريف' }
+
+export interface Legend { ramp?: string[]; lo?: string; hi?: string; classes?: [color: string, label: string][] }
+export type Corners = [[number, number], [number, number], [number, number], [number, number]]
+export interface RasterFrame { year?: number; season?: Season; url: string; coords: Corners }
+export interface RasterLayer { id: string; label: string; sub: string; byYear: boolean; seasons?: Season[]; legend: Legend; frames: RasterFrame[] }
+export interface VectorLayer { id: string; label: string; sub: string; legend: Legend; url: string; bounds: [[number, number], [number, number]] }
+export interface AnalysisIndex { rasters: RasterLayer[]; vectors: VectorLayer[] }
+export interface AnalysisState { raster: string | null; season: Season; opacity: number; vectors: string[] }
+export const ANALYSIS_OFF: AnalysisState = { raster: null, season: 'summer', opacity: 0.8, vectors: [] }
+
+let analysis: Promise<AnalysisIndex> | null = null
+export function loadAnalysis(): Promise<AnalysisIndex> {
+  analysis ??= fetch('/data/analysis/index.json').then((r) => r.json())
+  return analysis
+}
+
+/** the frame of a raster layer for a year (and season), or undefined when that year has none */
+export function rasterFrame(l: RasterLayer, year: number, season: Season): RasterFrame | undefined {
+  if (!l.byYear) return l.frames[0]
+  return l.frames.find((f) => f.year === year && (!l.seasons || f.season === season))
+}
+export const rasterYears = (l: RasterLayer) => [...new Set(l.frames.map((f) => f.year!))]
 
 export async function loadProfiles(): Promise<Profile[]> {
   return fetch('/data/profiles.json').then((r) => r.json())

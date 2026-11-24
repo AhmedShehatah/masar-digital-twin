@@ -4,7 +4,7 @@ Inputs (data-raw/):
   kmz/{year}.kmz              original Google Earth / ArcGIS exports (preferred: they keep
                               building courtyards as holes and put the name on every part)
   dwg-geojson/{year}.geojson  DWG drawings converted with dwgread + ESRI attributes joined
-                              (used for years without a KMZ, currently 2016)
+                              (fallback for a year without a KMZ; every year has one now)
   site/features-{year}.json   GeoJSON from the original MASAR site (used to recover names)
   site/buildings.json         building profiles (floors, images, descriptions)
   site/campus-measurements.json  measured length / width / height per place
@@ -70,7 +70,7 @@ def categorize(name, folder, gtype, area):
     # a building named "كلية …" is a faculty even when its folder says زراعة / تحت الانشاء
     if n.startswith("كليه") and "تحتالانشاء" not in n: return "faculty"
     if "زراع" in f or "مزرع" in f + n: return "farm"
-    if "حضراء" in f or "خضراء" in f: return "green"
+    if "حضراء" in f or "خضراء" in f + n or re.match(r"[gq]reenspace", n): return "green"
     if "مظل" in f + n: return "canopy"
     if "تحتالانشاء" in f + n: return "construction"
     if "مسجد" in f + n or "مساجد" in f or n in MOSQUE_H or n == "المصلى": return "mosque"

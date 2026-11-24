@@ -25,23 +25,24 @@
    "builtM2": 41021
   },
   "2016": {
-   "features": 686,
+   "features": 670,
    "byCat": {
     "pole": 469,
-    "gate": 3,
-    "road": 98,
     "boundary": 1,
-    "faculty": 21,
-    "building": 67,
+    "faculty": 8,
     "parking": 7,
     "mosque": 2,
     "service": 1,
     "construction": 1,
-    "farm": 3,
-    "housing": 13
+    "farm": 2,
+    "housing": 13,
+    "building": 5,
+    "road": 98,
+    "gate": 3,
+    "green": 60
    },
-   "roadKm": 30.5,
-   "builtM2": 96604
+   "roadKm": 32.5,
+   "builtM2": 58871
   },
   "2021": {
    "features": 545,

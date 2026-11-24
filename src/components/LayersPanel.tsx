@@ -1,5 +1,7 @@
 import { X, Eye, EyeOff } from 'lucide-react'
-import { CAT_META, fmt, type Campus, type Cat } from '../data'
+import type { Dispatch, SetStateAction } from 'react'
+import { CAT_META, fmt, type AnalysisIndex, type AnalysisState, type Campus, type Cat, type Year } from '../data'
+import { AnalysisSection } from './AnalysisSection'
 
 const GROUPS: { key: 'build' | 'infra' | 'land'; title: string }[] = [
   { key: 'build', title: 'المباني والمنشآت' },
@@ -7,8 +9,10 @@ const GROUPS: { key: 'build' | 'infra' | 'land'; title: string }[] = [
   { key: 'land', title: 'الأرض والمساحات' },
 ]
 
-export function LayersPanel({ fc, hidden, setHidden, onClose }: {
+export function LayersPanel({ fc, hidden, setHidden, onClose, analysis, ana, setAna, year, onYear }: {
   fc: Campus; hidden: Cat[]; setHidden: (h: Cat[]) => void; onClose: () => void
+  analysis: AnalysisIndex | null; ana: AnalysisState; setAna: Dispatch<SetStateAction<AnalysisState>>
+  year: Year; onYear: (y: Year) => void
 }) {
   const counts = new Map<Cat, number>()
   fc.features.forEach((f) => counts.set(f.properties.c, (counts.get(f.properties.c) ?? 0) + 1))
@@ -41,6 +45,7 @@ export function LayersPanel({ fc, hidden, setHidden, onClose }: {
           </div>
         )
       })}
+      {analysis && <AnalysisSection index={analysis} state={ana} setState={setAna} year={year} onYear={onYear} />}
     </aside>
   )
 }

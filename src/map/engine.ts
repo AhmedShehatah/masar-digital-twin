@@ -1,7 +1,8 @@
 import * as maplibregl from 'maplibre-gl'
 import { type Map as MLMap, type StyleSpecification, type ExpressionSpecification } from 'maplibre-gl'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
-import { CAMPUS_CENTER, CAT_META, EXTRUDED, type Campus, type CampusFeature, type Cat } from '../data'
+import { CAMPUS_CENTER, CAT_META, EXTRUDED, type Campus, type CampusFeature, type Cat, type RasterFrame, type VectorLayer } from '../data'
+import { AnalysisLayers } from './analysis'
 
 maplibregl.setWorkerUrl(workerUrl)
 
@@ -485,6 +486,27 @@ export class CampusEngine {
   }
   cancelPick() { this.picking?.(null); this.picking = null; this.map.getCanvas().style.cursor = '' }
   get isPicking() { return !!this.picking }
+
+  // ---------- spatial analysis ----------
+  private analysis: AnalysisLayers | null = null
+  private get ana() { return (this.analysis ??= new AnalysisLayers(this.map)) }
+
+  setRaster(frame: RasterFrame | null, opacity: number) {
+    if (this.isLoaded) this.ana.setRaster(frame, opacity)
+  }
+
+  /** show the given analyses; one that was just switched on and reaches outside the view is framed */
+  setVectors(all: VectorLayer[], on: string[]) {
+    if (!this.isLoaded) return
+    const added = this.ana.setVectors(all, on)
+    const v = added.at(-1)
+    if (!v) return
+    const view = this.map.getBounds()
+    const [[w, s], [e, n]] = v.bounds
+    if (view.contains([w, s]) && view.contains([e, n])) return
+    this.stopOrbit()
+    this.map.fitBounds(v.bounds, { padding: { top: 90, bottom: 150, left: 40, right: 320 }, pitch: 45, bearing: this.map.getBearing(), duration: 1800, maxZoom: 16.5 })
+  }
 
   resetNorth() { this.map.easeTo({ bearing: 0, pitch: 50, duration: 900 }) }
   zoomBy(d: number) { this.map.easeTo({ zoom: this.map.getZoom() + d, duration: 400 }) }

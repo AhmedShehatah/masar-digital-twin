@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "data": ".venv/bin/python -W ignore scripts/build_data.py"
+    "data": ".venv/bin/python -W ignore scripts/build_data.py && .venv/bin/python -W ignore scripts/build_analysis.py"
   },
   "dependencies": {
     "lucide-react": "^1.72.0",

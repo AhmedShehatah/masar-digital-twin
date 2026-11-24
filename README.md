@@ -13,6 +13,7 @@ A 3D digital twin of the New Sohag University campus (Al-Kawamel), built from th
 - **The film** ("شاهد الفيلم"): a 10-chapter cinematic tour with letterbox bars, film grain, chapter title cards, subtitles and a generated ambient score (Web Audio, no audio files). Space pauses, ← skips a chapter.
 - **Map gallery** ("المعرض"): a cinematic atlas of 19 GIS maps in two chapters. Chapter 1 covers land use, solar radiation and network analyses (routes, service areas, closest facility, OD matrix). Chapter 2 is a time-lapse of the NDVI, SAVI and CCI vegetation indices for 2006, 2011, 2021 and 2026. It has letterbox bars, chapter title cards, slow camera push-ins, film grain, a light that matches each map, and autoplay. Keys: ← / → move between maps, Space pauses, `G` shows all maps, Esc closes. Open it directly with `?gallery`. The images are in `public/images/maps/` and the captions in `src/gallery/maps.ts`.
 - **Voice assistant** (gold orb, or press `M`): speak or type in Arabic. For example "خذني إلى كلية الهندسة", "فين معمل 309", "اعرض الحرم في 2011", "كم عمود إنارة؟", "شغّل الليل", "ابدأ الجولة". Voice input uses the browser's speech recognition (Chrome, Edge, Safari). Spoken replies are off by default and switch on with the speaker button.
+- **Spatial analysis layers** (in "الطبقات"): GIS results draped on the 3D map. Image layers: NDVI, SAVI and CCI for all five years, land surface temperature by season (2006, 2016, 2026), land cover (2016, 2021, 2026), elevation and slope. The yearly ones follow the Time Machine and cross-fade between years; if a year has no data, the panel offers the years that do. Vector layers: service areas, closest facility, the garage cost matrix, the 18-stop visit route, and the drainage basins with stream order and hazard points (the camera pulls out to frame them). Built by `scripts/build_analysis.py` into `public/data/analysis/`.
 - A stats panel with 20-year trends, layer filters, and day / night mode.
 - Arabic RTL layout that works on phones.
 
@@ -42,8 +43,10 @@ npx vercel --prod
 
 | Path | What it is |
 |---|---|
-| `data-raw/kmz/` | Original KMZ exports for 2006, 2011, 2021 and 2026. These are the preferred source because they keep building courtyards as holes and put the name on every part |
-| `data-raw/dwg-geojson/` | The five AutoCAD drawings from Drive, converted with LibreDWG with their ArcGIS attributes (name, folder, height) joined on. Only used for years without a KMZ (currently 2016) |
+| `data-raw/kmz/` | Original KMZ exports for every year (2016 is the Google Earth tracing `شف2016.kmz` from the Drive "Masar" folder). These are the preferred source because they keep building courtyards as holes and put the name on every part |
+| `data-raw/dwg-geojson/` | The five AutoCAD drawings from Drive, converted with LibreDWG with their ArcGIS attributes (name, folder, height) joined on. Only used for a year without a KMZ (none at the moment) |
+| `data-raw/drive/` | The GIS analysis KMZs from the Drive "Masar" folder, in their original folders: vegetation indices, surface temperature, land cover, topography, hydrology, network analysis, climate, soil |
+| `scripts/build_analysis.py` | Turns `data-raw/drive/` into `public/data/analysis/` (overlay images, GeoJSON and `index.json`). The Sohag-scale copies, the campus climate rasters (one flat colour each), wind arrows (one value) and soil (one class) are left out |
 | `data-raw/site/` | Building profiles, floor contents, measurements and photos from the original MASAR site |
 | `scripts/build_data.py` | Turns the raw data into `public/data/` (categories, heights, building links, stats) and compresses the photos |
 | `public/data/years/*.geojson` | One map file per year, used by the site |

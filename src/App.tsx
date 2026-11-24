@@ -4,8 +4,8 @@ import { AnimatePresence } from 'motion/react'
 import { Search, Layers, BarChart3, Moon, Sun, Clapperboard, Navigation, Images } from 'lucide-react'
 import { CampusEngine } from './map/engine'
 import {
-  YEARS, loadYear, loadProfiles, loadStats, centroid, norm,
-  type Campus, type CampusFeature, type Cat, type Profile, type Stats, type Year,
+  YEARS, loadYear, loadProfiles, loadStats, loadAnalysis, rasterFrame, centroid, norm, ANALYSIS_OFF,
+  type AnalysisIndex, type AnalysisState, type Campus, type CampusFeature, type Cat, type Profile, type Stats, type Year,
 } from './data'
 import { Intro, Arrival, Loader } from './components/Intro'
 import { LayersPanel } from './components/LayersPanel'
@@ -36,6 +36,8 @@ export default function App() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [night, setNight] = useState(true)
   const [hidden, setHidden] = useState<Cat[]>([])
+  const [analysis, setAnalysis] = useState<AnalysisIndex | null>(null)
+  const [ana, setAna] = useState<AnalysisState>(ANALYSIS_OFF)
   const [panel, setPanel] = useState<'layers' | 'stats' | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const [sel, setSel] = useState<Selection | null>(null)
@@ -103,6 +105,7 @@ export default function App() {
       })
       }
       YEARS.forEach((y) => loadYear(y).then((c) => setData((d) => ({ ...d, [y]: c }))))
+      loadAnalysis().then(setAnalysis).catch(() => undefined)
     })
     ;(window as unknown as { masar: CampusEngine }).masar = eng
     return () => { cancelled = true; eng.destroy() }
@@ -142,6 +145,16 @@ export default function App() {
   useEffect(() => { engine.current?.setHidden(hidden) }, [hidden])
   useEffect(() => { if (phase === 'ready' || phase === 'arrive') engine.current?.setNight(night) }, [night, phase])
   useEffect(() => { engine.current?.select(sel?.feature.properties.id ?? null) }, [sel])
+
+  // analysis overlays: off during the intro, the film and the before/after view
+  const anaLive = phase === 'ready' && !touring && !compare
+  useEffect(() => {
+    const l = anaLive ? analysis?.rasters.find((r) => r.id === ana.raster) : undefined
+    engine.current?.setRaster(l ? rasterFrame(l, year, ana.season) ?? null : null, ana.opacity)
+  }, [analysis, ana.raster, ana.season, ana.opacity, year, anaLive])
+  useEffect(() => {
+    if (analysis) engine.current?.setVectors(analysis.vectors, anaLive ? ana.vectors : [])
+  }, [analysis, ana.vectors, anaLive])
 
   // ---------- floating labels ----------
   useEffect(() => {
@@ -334,7 +347,8 @@ export default function App() {
       </header>
 
       {ready && panel === 'layers' && current && (
-        <LayersPanel fc={current} hidden={hidden} setHidden={setHidden} onClose={() => setPanel(null)} />
+        <LayersPanel fc={current} hidden={hidden} setHidden={setHidden} onClose={() => setPanel(null)}
+          analysis={analysis} ana={ana} setAna={setAna} year={year} onYear={(y) => { setPlaying(false); switchYear(y) }} />
       )}
       {ready && panel === 'stats' && stats && !sel && <StatsPanel stats={stats} year={year} onClose={() => setPanel(null)} />}
 

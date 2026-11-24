@@ -147,6 +147,38 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; background: 
 .chip .dot { width: 10px; height: 10px; border-radius: 3px; flex: none; box-shadow: 0 0 10px currentColor; }
 .chip .cnt { margin-inline-start: auto; font-family: var(--num); font-size: 12px; color: var(--muted); }
 
+/* spatial analysis */
+.ana-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.ana-pill {
+  display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 10px; font-size: 12.5px; text-align: start;
+  background: rgba(255,255,255,.03); box-shadow: 0 0 0 1px var(--line) inset; transition: background .15s, box-shadow .15s, color .15s;
+  color: #c9d3e3; min-width: 0;
+}
+.ana-pill i { width: 14px; height: 14px; border-radius: 4px; flex: none; }
+.ana-pill:hover { background: rgba(255,255,255,.07); }
+.ana-pill.on { background: linear-gradient(180deg, rgba(245,181,68,.22), rgba(245,181,68,.1)); box-shadow: 0 0 0 1px rgba(245,181,68,.45) inset; color: var(--gold-2); }
+.ana-card { margin-top: 8px; padding: 10px; border-radius: 12px; background: rgba(255,255,255,.035); box-shadow: 0 0 0 1px var(--line) inset; }
+.ana-t { font-size: 13px; font-weight: 600; display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.ana-t span { font-size: 11px; font-weight: 400; color: var(--muted); }
+.ana-seg { display: flex; gap: 2px; padding: 2px; border-radius: 9px; background: rgba(0,0,0,.25); margin-bottom: 9px; }
+.ana-seg button { flex: 1; padding: 5px 0; border-radius: 7px; font-size: 12px; color: var(--muted); transition: background .15s, color .15s; }
+.ana-seg button.on { background: rgba(245,181,68,.2); color: var(--gold-2); }
+.ana-ramp .bar { height: 8px; border-radius: 4px; }
+.ana-ramp .ends { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 4px; }
+.ana-classes { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px; color: #c9d3e3; }
+.ana-classes span { display: inline-flex; align-items: center; gap: 6px; }
+.ana-classes i { width: 10px; height: 10px; border-radius: 3px; }
+.ana-foot { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 8px; }
+.ana-foot .num { color: var(--gold-2); }
+.ana-miss { font-size: 12px; color: #c9d3e3; line-height: 1.7; }
+.ana-years { display: inline-flex; gap: 4px; margin-inline-start: 6px; flex-wrap: wrap; }
+.ana-years button { padding: 1px 8px; border-radius: 6px; font-size: 12px; background: rgba(245,181,68,.15); color: var(--gold-2); }
+.ana-years button:hover { background: rgba(245,181,68,.3); }
+.ana-op { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 11px; color: var(--muted); }
+.ana-op input { flex: 1; accent-color: var(--gold); }
+.ana-vec { padding: 0 8px 8px 8px; margin-inline-start: 20px; }
+.ana-vec .sub { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+
 /* ---------- time machine ---------- */
 .timeline {
   position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 15;
