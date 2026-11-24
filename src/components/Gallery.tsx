@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { ChevronLeft, ChevronRight, LayoutGrid, Pause, Play, Volume2, VolumeX, X } from 'lucide-react'
-import { CHAPTERS, SHOTS, VEG_INDICES, VEG_YEARS, src, thumb, type MapShot } from '../gallery/maps'
+import { CHAPTERS, SHOTS, VEG_INDICES, reelOf, src, thumb, type MapShot } from '../gallery/maps'
 import { ambient } from '../voice/ambient'
 
-const SLIDE_MS = { campus: 7500, veg: 3800 }
 const CARD_MS = 2800
 const two = (n: number) => String(n).padStart(2, '0')
-const reelLength = (reel: string) => SHOTS.filter((s) => s.reel === reel).length
+const isLapse = (s: MapShot) => reelOf(s).length > 1
+/** time on screen: a time-lapse frame moves fast, a 3D render a little slower, a single map gets time to read */
+const slideMs = (s: MapShot) => (s.kind === 'render' ? 5000 : isLapse(s) ? 3800 : 7500)
 
 export function Gallery({ onClose }: { onClose: () => void }) {
   const [i, setI] = useState(0)
   const [playing, setPlaying] = useState(true)
-  const [card, setCard] = useState<MapShot['chapter'] | null>('campus')
+  const [card, setCard] = useState<MapShot['chapter'] | null>(SHOTS[0].chapter)
   const [grid, setGrid] = useState(false)
   const [muted, setMuted] = useState(ambient.muted)
   const shot = SHOTS[i]
@@ -77,13 +78,15 @@ export function Gallery({ onClose }: { onClose: () => void }) {
   }
 
   const running = playing && !card && !grid
-  const reelShots = SHOTS.filter((s) => s.reel === shot.reel)
+  const reelShots = reelOf(shot)
+  const lapse = reelShots.length > 1
   const kbStyle = {
     '--fx': `${shot.focus[0]}%`, '--fy': `${shot.focus[1]}%`,
-    '--kb-to': shot.chapter === 'veg' ? 1.22 : 1.09,
-    animationDuration: `${reelLength(shot.reel) * SLIDE_MS[shot.chapter] + 1500}ms`,
+    '--kb-to': lapse ? 1.22 : 1.09,
+    animationDuration: `${reelShots.reduce((t, s) => t + slideMs(s), 0) + 1500}ms`,
     animationPlayState: running ? 'running' : 'paused',
   } as CSSProperties
+  const frame = reelShots[0]
 
   return (
     <motion.div className="gallery" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }}
@@ -97,12 +100,12 @@ export function Gallery({ onClose }: { onClose: () => void }) {
       {/* ---------- stage ---------- */}
       <div className="g-stage">
         <AnimatePresence>
-          <motion.div key={shot.reel} className="g-frame" style={{ '--ar': `${shot.w} / ${shot.h}` } as CSSProperties}
+          <motion.div key={shot.reel} className="g-frame" style={{ '--ar': `${frame.w} / ${frame.h}` } as CSSProperties}
             initial={{ opacity: 0, scale: 0.94, filter: 'blur(14px) brightness(1.8)' }}
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px) brightness(1)' }}
             exit={{ opacity: 0, scale: 1.04, filter: 'blur(10px) brightness(0.4)' }}
             transition={{ duration: 1.1, ease: [0.2, 0.7, 0.2, 1] }}>
-            <div className="g-kb" style={kbStyle}>
+            <div className={`g-kb ${lapse ? 'fit' : ''}`} style={kbStyle}>
               <AnimatePresence>
                 <motion.img key={shot.id} src={src(shot)} alt={shot.title} draggable={false}
                   initial={{ opacity: sameReel ? 0 : 1 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -139,20 +142,25 @@ export function Gallery({ onClose }: { onClose: () => void }) {
         </AnimatePresence>
 
         <div className="g-side">
-          {shot.index && (
+          {lapse && shot.year && (
             <div className="g-veg">
-              <div className="g-tabs">
-                {VEG_INDICES.map((ix) => (
-                  <button key={ix} className={ix === shot.index ? 'on' : ''}
-                    onClick={() => go(SHOTS.findIndex((s) => s.index === ix && s.year === shot.year))}>{ix}</button>
-                ))}
-              </div>
+              {shot.index && (
+                <div className="g-tabs">
+                  {VEG_INDICES.map((ix) => (
+                    <button key={ix} className={ix === shot.index ? 'on' : ''}
+                      onClick={() => {
+                        const same = SHOTS.findIndex((s) => s.index === ix && s.year === shot.year)
+                        go(same >= 0 ? same : SHOTS.findIndex((s) => s.index === ix))
+                      }}>{ix}</button>
+                  ))}
+                </div>
+              )}
               <div className="g-years">
-                <div className="g-years-fill" style={{ width: `${(VEG_YEARS.indexOf(shot.year as never) / (VEG_YEARS.length - 1)) * 100}%` }} />
-                {VEG_YEARS.map((y) => (
-                  <button key={y} className={`num ${y === shot.year ? 'cur' : ''} ${y < shot.year! ? 'past' : ''}`}
-                    onClick={() => go(SHOTS.findIndex((s) => s.index === shot.index && s.year === y))}>
-                    <i />{y}
+                <div className="g-years-fill" style={{ width: `${(reelShots.indexOf(shot) / (reelShots.length - 1)) * 100}%` }} />
+                {reelShots.map((s) => (
+                  <button key={s.id} className={`num ${s === shot ? 'cur' : ''} ${s.year! < shot.year! ? 'past' : ''}`}
+                    onClick={() => go(SHOTS.indexOf(s))}>
+                    <i />{s.year}
                   </button>
                 ))}
               </div>
@@ -177,7 +185,7 @@ export function Gallery({ onClose }: { onClose: () => void }) {
           {SHOTS.map((s, k) => (
             <i key={s.id} className={`${k < i ? 'done' : ''} ${s.chapter !== SHOTS[k - 1]?.chapter && k ? 'gap' : ''}`} onClick={() => go(k)}>
               {k === i && (
-                <b key={i} style={{ animationDuration: `${SLIDE_MS[s.chapter]}ms`, animationPlayState: running ? 'running' : 'paused' }}
+                <b key={i} style={{ animationDuration: `${slideMs(s)}ms`, animationPlayState: running ? 'running' : 'paused' }}
                   onAnimationEnd={next} />
               )}
             </i>
@@ -203,7 +211,7 @@ export function Gallery({ onClose }: { onClose: () => void }) {
           return (
             <motion.div key={card} className="g-card" onClick={() => setCard(null)}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.7 }}>
-              {card === 'campus' && <motion.div className="g-card-pre" initial={{ opacity: 0, letterSpacing: '0.9em' }} animate={{ opacity: 1, letterSpacing: '0.5em' }} transition={{ duration: 1.8 }}>MASAR · ATLAS</motion.div>}
+              {card === CHAPTERS[0].id && <motion.div className="g-card-pre" initial={{ opacity: 0, letterSpacing: '0.9em' }} animate={{ opacity: 1, letterSpacing: '0.5em' }} transition={{ duration: 1.8 }}>MASAR · ATLAS</motion.div>}
               <motion.div className="g-card-k" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8 }}>{c.kicker}</motion.div>
               <motion.h1 initial={{ opacity: 0, y: 24, filter: 'blur(12px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} transition={{ delay: 0.35, duration: 1.1, ease: [0.2, 0.7, 0.2, 1] }}>{c.title}</motion.h1>
               <motion.span className="g-card-rule" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.8, duration: 1 }} />
@@ -228,7 +236,7 @@ export function Gallery({ onClose }: { onClose: () => void }) {
                         initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 * k, duration: 0.4 }}
                         onClick={() => { go(SHOTS.indexOf(s)); setGrid(false) }}>
                         <span className="ph"><img src={thumb(s)} alt="" loading="lazy" /></span>
-                        <span className="tt">{s.index ? `${s.index} · ${s.year}` : s.title}</span>
+                        <span className="tt">{s.year ? `${s.short} · ${s.year}` : s.short}</span>
                       </motion.button>
                     ))}
                   </div>

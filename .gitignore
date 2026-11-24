@@ -6,3 +6,5 @@ dist
 *.tsbuildinfo
 .claude/
 __pycache__/
+public/images/maps/
+src/gallery/images.gen.json

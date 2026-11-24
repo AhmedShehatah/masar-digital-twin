@@ -611,6 +611,8 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; background: 
 }
 .g-kb { position: absolute; inset: 0; transform-origin: var(--fx) var(--fy); animation-name: kenburns; animation-timing-function: cubic-bezier(.35,.1,.45,1); animation-fill-mode: forwards; will-change: transform; }
 .g-kb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+/* time-lapse frames can differ in size from year to year: letterbox instead of cropping legends */
+.g-kb.fit img { object-fit: contain; }
 @keyframes kenburns { from { transform: scale(1); } to { transform: scale(var(--kb-to)); } }
 .g-sweep {
   position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen;
