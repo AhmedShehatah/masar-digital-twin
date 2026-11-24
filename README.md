@@ -38,6 +38,33 @@ Or deploy from the terminal:
 npx vercel --prod
 ```
 
+## Gallery maps
+
+The atlas (`?gallery`) gets its maps from the shared Google Drive folder "Final layout"
+(`1aQjwLhdVegAGc_oI8IeuicxIHnLcZSWB`), not from git. The folder must stay shared as *anyone with the link*.
+
+`npm run maps` (also run automatically before every `npm run build`, and before `npm run dev` when no maps are present yet):
+
+1. walks the Drive folder,
+2. matches its files to the entries in `src/gallery/catalog.ts`,
+3. resizes each map (longest side 1600 px), makes a 360 px thumbnail and names both with a content hash,
+4. writes them to `public/images/maps/` and the list to `src/gallery/images.gen.json` (both git-ignored).
+
+Maps that are not in Drive (solar radiation, stop order, closest facility) live in `assets/maps-local/`.
+
+**Adding or changing a map**
+
+- Replace a picture in Drive (ideally with *Manage versions* so its name stays) and redeploy.
+- A new year in a time-lapse folder (e.g. `تصنيف/2016`) joins that time-lapse automatically.
+- Anything else new in Drive shows up in the log as `warn: not in gallery: <path>`. Add an entry for it in `catalog.ts` with a title and description.
+- An `error:` line means an entry no longer matches Drive (a file was re-uploaded under a new name, or a folder now holds two images). The build stops so a broken gallery is never deployed; the last good deploy stays live.
+
+**If Google blocks the build server**
+
+The default needs no key. If a deploy log shows Drive refusing requests, create an API key in Google Cloud
+(enable the *Google Drive API*, restrict the key to it) and set it as the `GOOGLE_API_KEY` environment variable
+in Cloudflare Pages and Vercel. The script then uses the official Drive API.
+
 ## Data
 
 | Path | What it is |

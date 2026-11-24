@@ -5,3 +5,5 @@ dist
 .DS_Store
 *.tsbuildinfo
 .claude/
+public/images/maps/
+src/gallery/images.gen.json

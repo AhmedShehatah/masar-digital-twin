@@ -8,7 +8,10 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "data": ".venv/bin/python -W ignore scripts/build_data.py",
-    "test": "node --test 'scripts/*.test.ts'"
+    "test": "node --test 'scripts/*.test.ts'",
+    "maps": "node scripts/sync-maps.ts",
+    "prebuild": "node scripts/sync-maps.ts",
+    "predev": "node scripts/sync-maps.ts --if-missing"
   },
   "dependencies": {
     "lucide-react": "^1.72.0",
@@ -24,5 +27,8 @@
     "sharp": "^0.35.5",
     "typescript": "^7.0.2",
     "vite": "^8.3.8"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }
