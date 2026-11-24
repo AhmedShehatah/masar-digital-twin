@@ -34,6 +34,18 @@ test('single from a missing file is an error', () => {
   assert.equal(r.errors.length, 1)
 })
 
+test('single from a file name that appears twice is an error', () => {
+  const r = resolveCatalog([entry({ key: 'slope', mode: 'single', from: 'تحليل طبوغرافي/b.jpg' })],
+    [f('تحليل طبوغرافي', 'b.jpg'), f('تحليل طبوغرافي', 'b.jpg')])
+  assert.equal(r.jobs.length, 0)
+  assert.match(r.errors[0], /found 2 files named b\.jpg/)
+})
+
+test('TIFF exports count as images', () => {
+  const r = resolveCatalog([entry({ key: 'class', mode: 'years', from: 'تصنيف' })], [f('تصنيف/2016', 'map.tif')])
+  assert.deepEqual(r.jobs.map((j) => j.id), ['class-2016'])
+})
+
 test('single from a local file', () => {
   const r = resolveCatalog([entry({ key: 'solar', mode: 'single', from: 'local:solar.jpg' })], [])
   assert.deepEqual(r.jobs, [{ id: 'solar', entry: 'solar', source: { local: 'solar.jpg' } }])

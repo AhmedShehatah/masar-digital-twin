@@ -4,7 +4,7 @@ import { normalizeName, type DriveFile } from './drive.ts'
 
 export interface Job { id: string; entry: string; year?: number; source: { drive: string } | { local: string } }
 
-const IMAGE = /\.(jpe?g|png|webp)$/i
+const IMAGE = /\.(jpe?g|png|webp|tiff?)$/i
 const YEAR = /^\d{4}$/
 const norm = (p: string) => p.split('/').map(normalizeName).filter(Boolean).join('/')
 const byName = (a: DriveFile, b: DriveFile) => a.name.localeCompare(b.name)
@@ -27,9 +27,11 @@ export function resolveCatalog(entries: Entry[], files: DriveFile[]): { jobs: Jo
     if (e.mode === 'single') {
       if (IMAGE.test(from)) {
         const cut = from.lastIndexOf('/')
-        const file = inFolder(from.slice(0, Math.max(cut, 0))).find((f) => f.name === from.slice(cut + 1))
-        if (file) take(file, { id: e.key, entry: e.key })
-        else errors.push(`${e.key}: file not found in Drive: ${from}`)
+        const name = from.slice(cut + 1)
+        const found = inFolder(from.slice(0, Math.max(cut, 0))).filter((f) => f.name === name)
+        if (found.length === 1) take(found[0], { id: e.key, entry: e.key })
+        else if (!found.length) errors.push(`${e.key}: file not found in Drive: ${from}`)
+        else errors.push(`${e.key}: found ${found.length} files named ${name} in Drive; delete the old copy`)
       } else {
         const found = inFolder(from)
         if (found.length === 1) take(found[0], { id: e.key, entry: e.key })

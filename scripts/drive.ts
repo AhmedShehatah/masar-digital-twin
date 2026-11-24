@@ -18,6 +18,8 @@ const decode = (s: string) =>
 
 /** Parse the HTML of drive.google.com/embeddedfolderview (an undocumented page, but it needs no key). */
 export function parseFolderView(html: string): DriveItem[] {
+  // even an empty folder has this container; without it Google sent a sign-in, consent or rate-limit page
+  if (!html.includes('class="flip-entries"')) throw new Error('Drive sent a page that is not a Drive folder listing (blocked or rate-limited?)')
   const re = /href="https:\/\/drive\.google\.com\/(file\/d|drive\/folders)\/([\w-]+)[^"]*".*?flip-entry-title">(.*?)<\/div>/gs
   return [...html.matchAll(re)].map((m) => ({ id: m[2], name: decode(m[3]), folder: m[1] !== 'file/d' }))
 }

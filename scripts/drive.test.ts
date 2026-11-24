@@ -24,11 +24,15 @@ test('parseFolderView reads subfolders', () => {
 })
 
 test('parseFolderView returns nothing for an empty folder', () => {
-  assert.deepEqual(parseFolderView('<html><body></body></html>'), [])
+  assert.deepEqual(parseFolderView(fixture('folder-empty.html')), [])
+})
+
+test('parseFolderView rejects a page that is not a folder listing', () => {
+  assert.throws(() => parseFolderView('<html><body>Our systems have detected unusual traffic</body></html>'), /not a Drive folder listing/)
 })
 
 test('parseFolderView decodes HTML entities in names', () => {
-  const html = '<div class="flip-entry"><a href="https://drive.google.com/file/d/abc123/view"><div class="flip-entry-title">a &amp; b&#39;s</div></a></div>'
+  const html = '<div class="flip-entries"><div class="flip-entry"><a href="https://drive.google.com/file/d/abc123/view"><div class="flip-entry-title">a &amp; b&#39;s</div></a></div>'
   assert.deepEqual(parseFolderView(html), [{ id: 'abc123', name: "a & b's", folder: false }])
 })
 
