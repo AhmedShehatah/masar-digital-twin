@@ -4,10 +4,10 @@ import type {
 } from 'maplibre-gl'
 import type { RasterFrame, VectorLayer } from '../data'
 
-/** raster overlays sit on the satellite, under every campus layer */
+/** raster overlays sit on the base map, under every campus layer */
 const RASTER_BEFORE = 'land'
 /** vector fills go under the buildings, their lines and points above them but under a directions route */
-const FILL_BEFORE = 'buildings'
+const FILL_BEFORE = 'model-hit'
 const LINE_BEFORE = 'route-glow'
 
 type NoSource<T> = T extends unknown ? Omit<T, 'source'> : never

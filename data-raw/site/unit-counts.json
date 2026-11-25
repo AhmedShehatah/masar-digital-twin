@@ -1,0 +1,21 @@
+{
+ "_note": "Official unit counts per year. They replace the counts derived from the drawings, which count every drawn part (a mosque is six parts, the farm is 139 plots). Categories not listed keep the drawn count.",
+ "2026": {
+  "mosque": 2,
+  "gate": 5,
+  "construction": 4,
+  "pole": 1165,
+  "power": 33,
+  "faculty": 13,
+  "service": 2,
+  "parking": 7,
+  "farm": 1,
+  "cafe": 5,
+  "admin": 4,
+  "caravan": 12,
+  "canopy": 197,
+  "lecture": 6,
+  "road": 190,
+  "housing": 13
+ }
+}

@@ -61,14 +61,12 @@ export const CAT_META: Record<Cat, { label: string; color: string; group: 'build
   boundary: { label: 'حدود الحرم', color: '#f5b544', group: 'land' },
 }
 
-export const EXTRUDED: Cat[] = ['faculty', 'lecture', 'admin', 'housing', 'mosque', 'service', 'cafe', 'kiosk', 'caravan', 'construction', 'building', 'canopy']
-
 export const YEAR_STORY: Record<Year, { title: string; line: string }> = {
   2006: { title: 'البداية', line: 'أرض صحراوية وأول حدود مرسومة للموقع.' },
   2011: { title: 'أول الكليات', line: 'التربية والآداب والتجارة والهندسة ترتفع، وأول 237 عمود إنارة.' },
   2016: { title: 'مدينة جامعية', line: 'إحدى عشرة عمارة سكنية للطلاب، ومسجد، وشبكة طرق 32 كم.' },
   2021: { title: 'حرم يتنفس', line: 'مظلات ومساحات خضراء وكرفانات وخدمات للطلاب.' },
-  2026: { title: 'التوأم الرقمي', line: '1,856 عمود إنارة، 70 كم طرق، ومزرعة كلية الزراعة.' },
+  2026: { title: 'التوأم الرقمي', line: '1,165 عمود إنارة، 70 كم طرق، ومزرعة كلية الزراعة.' },
 }
 
 const cache = new Map<number, Promise<Campus>>()

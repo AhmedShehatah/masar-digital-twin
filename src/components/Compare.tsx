@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { CampusEngine } from '../map/engine'
+import type { BasemapId } from '../map/basemaps'
 import { YEARS, YEAR_STORY, fmt, loadYear, type Cat, type Stats, type Year } from '../data'
 
 const noop = () => {}
@@ -11,8 +12,8 @@ const noop = () => {}
  * clipped to the left of a draggable divider. The overlay copies the main map's
  * camera on every frame, so pan / zoom / tilt on the main map moves both.
  */
-export function CompareView({ main, left, right, night, hidden }: {
-  main: CampusEngine; left: Year; right: Year; night: boolean; hidden: Cat[]
+export function CompareView({ main, left, right, night, hidden, basemap }: {
+  main: CampusEngine; left: Year; right: Year; night: boolean; hidden: Cat[]; basemap: BasemapId
 }) {
   const el = useRef<HTMLDivElement>(null)
   const wrap = useRef<HTMLDivElement>(null)
@@ -25,7 +26,7 @@ export function CompareView({ main, left, right, night, hidden }: {
 
   // create the overlay map once and keep it locked to the main camera
   useEffect(() => {
-    const e = new CampusEngine(el.current!, { onSelect: noop, onHover: noop, onMove: noop }, { attribution: false })
+    const e = new CampusEngine(el.current!, { onSelect: noop, onHover: noop, onMove: noop }, { attribution: false, basemap })
     eng.current = e
     e.setInteractive(false)
     const sync = () => {
@@ -50,6 +51,7 @@ export function CompareView({ main, left, right, night, hidden }: {
   }, [left])
   useEffect(() => { eng.current?.ready().then(() => eng.current?.setNight(night)) }, [night])
   useEffect(() => { eng.current?.setHidden(hidden) }, [hidden])
+  useEffect(() => { eng.current?.setBasemap(basemap) }, [basemap])
 
   const onDown = (ev: React.PointerEvent) => {
     ;(ev.currentTarget as HTMLElement).setPointerCapture(ev.pointerId)

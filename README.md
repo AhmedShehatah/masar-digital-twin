@@ -3,7 +3,7 @@
 A 3D digital twin of the New Sohag University campus (Al-Kawamel), built from the original survey files for 2006 – 2026.
 
 **What it does**
-- Cinematic opening: the globe spins, then the camera dives onto the campus and the buildings rise as 1,856 lights switch on.
+- Cinematic opening: the globe spins, then the camera dives onto the campus and the buildings rise as 1,165 lights switch on.
 - 3D satellite map with every building raised to its real height, glowing roads and a night lighting layer.
 - Time machine: switch between 2006, 2011, 2016, 2021 and 2026, or press ▶ to watch the campus grow.
 - Before/after slider ("قارن"): two years side by side with a draggable divider. Both sides move together in 3D, and a bar shows what changed (light poles, km of roads, built area).
@@ -93,5 +93,5 @@ To convert a new DWG drawing: `brew install libredwg`, then `dwgread -O GeoJSON`
 Map shapes are linked to building profiles by name in `ALIASES` inside `scripts/build_data.py`. `SHARED` lists buildings that house more than one faculty (for example Agriculture + Law). Four profiles have no map shape yet: المركزية, كلية التكنولوجيا والتعليم, كلية تكنولوجيا العلوم الصحية التطبيقية and مدينة الطلاب الجامعية. Add their names there once their shapes are drawn.
 
 ## Stack
-Vite · React · TypeScript · MapLibre GL (globe, 3D extrusions, heatmap glow) · Motion · Lucide icons.
+Vite · React · TypeScript · MapLibre GL (globe, heatmap glow) · three.js (3D campus models) · Motion · Lucide icons.
 Satellite imagery © Esri World Imagery. Check Esri's terms before a high-traffic public launch, or switch the `SAT` URL in `src/map/engine.ts` to another provider (MapTiler, Mapbox).

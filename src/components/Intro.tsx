@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
+import { Volume2, VolumeX } from 'lucide-react'
 import { useCam } from '../useCam'
 import type { CampusEngine } from '../map/engine'
 import { fmt, type Stats } from '../data'
@@ -46,7 +47,7 @@ function useCount(to: number, ms = 1800, delay = 0) {
 
 export function Arrival({ stats, onSkip }: { stats: Stats | null; onSkip: () => void }) {
   const y = stats?.years['2026']
-  const lights = useCount(y?.byCat.pole ?? 1856, 2200, 300)
+  const lights = useCount(y?.byCat.pole ?? 1165, 2200, 300)
   const roads = useCount(y?.roadKm ?? 70, 2000, 500)
   const feats = useCount(y?.features ?? 2552, 2200, 700)
   const years = useCount(20, 1600, 900)
@@ -68,13 +69,24 @@ export function Arrival({ stats, onSkip }: { stats: Stats | null; onSkip: () => 
   )
 }
 
-export function Loader() {
+/** loading screen; it also asks how to enter, since browsers only allow sound after a click */
+export function Loader({ loaded, entered, onEnter }: { loaded: boolean; entered: boolean; onEnter: (sound: boolean) => void }) {
   return (
     <div className="intro">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }} style={{ display: 'grid', placeItems: 'center', gap: 18 }}>
         <motion.img src="/logo.png" alt="" style={{ width: 64, filter: 'drop-shadow(0 0 24px rgba(245,181,68,.35))' }}
           animate={{ opacity: [0.5, 1, 0.5], scale: [0.98, 1.02, 0.98] }} transition={{ duration: 2.2, repeat: Infinity }} />
-        <div className="num" style={{ letterSpacing: '0.5em', color: '#8d9ab1', fontSize: 12, paddingLeft: '0.5em' }}>LOADING SATELLITE</div>
+        {!entered && (
+          <motion.div className="gate" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.6 }}>
+            <button className="gate-sound" autoFocus onClick={() => onEnter(true)}>
+              <Volume2 size={18} /> دخول بالصوت
+            </button>
+            <button className="gate-silent" onClick={() => onEnter(false)}>
+              <VolumeX size={14} /> بدون صوت
+            </button>
+          </motion.div>
+        )}
+        <div className="num" style={{ letterSpacing: '0.5em', color: '#8d9ab1', fontSize: 12, paddingLeft: '0.5em' }}>{loaded ? 'READY' : 'LOADING SATELLITE'}</div>
       </motion.div>
     </div>
   )

@@ -62,7 +62,7 @@ export function StatsPanel({ stats, year, onClose }: { stats: Stats; year: Year;
         ))}
       </div>
       <p className="muted" style={{ marginTop: 14, fontSize: 11.5, lineHeight: 1.8 }}>
-        ملاحظة: الأرقام تعكس ما رُسم في ملف كل سنة؛ ملف 2021 يغطي جزءًا من أعمدة الإنارة فقط.
+        ملاحظة: أرقام 2026 من الحصر الرسمي للوحدات؛ أرقام السنوات الأخرى تعكس ما رُسم في ملف كل سنة، وملف 2021 يغطي جزءًا من أعمدة الإنارة فقط.
       </p>
     </motion.aside>
   )

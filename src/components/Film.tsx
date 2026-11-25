@@ -109,7 +109,7 @@ function buildScript(ctx: FilmCtx): Chapter[] {
   const hou = avg(by((f) => f.properties.c === 'housing'))
   if (hou) ch.push({
     kicker: '', title: 'المدينة الجامعية',
-    say: 'وعلى أطراف الحرم تقف المدينة الجامعية، عمارات لسكن الطلاب والطالبات وأعضاء هيئة التدريس، بارتفاعات تصل إلى 25 مترًا.',
+    say: 'وعلى أطراف الحرم تقف المدينة الجامعية، عمارات لسكن الطالبات وأعضاء هيئة التدريس، بارتفاعات تصل إلى 25 مترًا.',
     shot: { center: hou, zoom: 16.6, pitch: 62, bearing: -70, drift: -35, dz: 0.3 },
   })
   const fm = avg(farm)

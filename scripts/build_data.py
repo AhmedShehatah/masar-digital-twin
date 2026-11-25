@@ -8,6 +8,7 @@ Inputs (data-raw/):
   site/features-{year}.json   GeoJSON from the original MASAR site (used to recover names)
   site/buildings.json         building profiles (floors, images, descriptions)
   site/campus-measurements.json  measured length / width / height per place
+  site/unit-counts.json       official unit counts per year; they replace the drawn counts in stats.json
   site/images/                building photos
 
 Outputs (public/data/):
@@ -87,6 +88,15 @@ def categorize(name, folder, gtype, area):
             or n in ("اداب", "تجاره", "تربيه", "هندسه", "زراعه", "بيطري", "تربيهرياضيه", "الخدماتالالكترونيه", "قاعهالمؤتمرات"):
         return "faculty"
     return "building"
+
+
+# drawing labels corrected from the official unit list (applied to the label only,
+# after the category and height have been worked out from the original name)
+RENAME = {
+    "fon7": "مبنى الإدارة المركزية (FON 7)",
+    "fon4": "مبنى التربية الرياضية (FON 3)",
+    "سكنطلاب": "سكن اعضاء هيئة التدريس",
+}
 
 
 # ---------- profiles ----------
@@ -316,6 +326,9 @@ def main():
                     if float(h) > 0: heights_by_name[norm(pr["name"])] = float(h)
                 except ValueError: pass
     stats = {"years": {}, "categories": {k: v[0] for k, v in CATS.items()}}
+    # the drawings count every part (a mosque is six polygons); the official counts win
+    unit_counts = {k: v for k, v in json.load(open(RAW / "site/unit-counts.json", encoding="utf-8")).items()
+                   if not k.startswith("_")}
     used_profiles = set()
     for y in YEARS:
         names = load_names(y)
@@ -374,7 +387,7 @@ def main():
             props = {"id": f"{y}-{i}", "c": cat}
             if cat == "gate" and not name:
                 name = f"البوابة {(raw_name or '').strip()}".strip() if (raw_name or "").strip().isdigit() else "بوابة"
-            if name and cat not in ("pole", "road", "canopy", "farm", "green"): props["n"] = name
+            if name and cat not in ("pole", "road", "canopy", "farm", "green"): props["n"] = RENAME.get(norm(name), name)
             if cat == "road" and pr.get("attr_type"): props["rt"] = pr["attr_type"]
             geom = g
             if gt == "Polygon":
@@ -407,7 +420,8 @@ def main():
                   ensure_ascii=False, separators=(",", ":"))
         if y == 2026:
             build_road_graph({"features": out}, OUT / "roads.json")
-        stats["years"][y] = {"features": len(out), "byCat": dict(cnt), "roadKm": round(road_m / 1000, 1),
+        by_cat = {**dict(cnt), **unit_counts.get(str(y), {})}
+        stats["years"][y] = {"features": len(out), "byCat": by_cat, "roadKm": round(road_m / 1000, 1),
                              "builtM2": round(built_m2)}
         print(y, len(out), dict(cnt.most_common()), "roads km", round(road_m / 1000, 1))
     for k, p in profiles.items(): p["mapped"] = k in used_profiles

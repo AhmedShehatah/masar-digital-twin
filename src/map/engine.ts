@@ -1,16 +1,15 @@
 import * as maplibregl from 'maplibre-gl'
 import { type Map as MLMap, type StyleSpecification, type ExpressionSpecification } from 'maplibre-gl'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
-import { CAMPUS_CENTER, CAT_META, EXTRUDED, type Campus, type CampusFeature, type Cat, type RasterFrame, type VectorLayer } from '../data'
+import { CAMPUS_CENTER, CAT_META, type Campus, type CampusFeature, type Cat, type RasterFrame, type VectorLayer } from '../data'
 import { AnalysisLayers } from './analysis'
 import { MODELLED, MODELLED_CATS } from './models'
 import type { Buildings3D } from './buildings3d'
+import { DEFAULT_BASEMAP, applyBasemap, applyBasemapTone, basemapLayers, basemapSources, type BasemapId } from './basemaps'
 
 const isModelled: ExpressionSpecification = ['any', ['in', ['get', 'p'], ['literal', MODELLED]], ['in', ['get', 'c'], ['literal', MODELLED_CATS]]]
 
 maplibregl.setWorkerUrl(workerUrl)
-
-const SAT = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 
 const catColor: ExpressionSpecification = [
   'match', ['get', 'c'],
@@ -23,10 +22,13 @@ const lit: ExpressionSpecification = ['<=', ['coalesce', ['get', 'r'], 0], ['glo
 const isCat = (...c: Cat[]): ExpressionSpecification => ['in', ['get', 'c'], ['literal', c]]
 const isPoly: ExpressionSpecification = ['in', ['geometry-type'], ['literal', ['Polygon', 'MultiPolygon']]]
 
-export const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
+/** length of each shot of the opening sequence */
+const INTRO_MS = { spin: 1800, dive: 7200, grow: 1800, lights: 2200 }
+
+export const easeInOut =(t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
 export const easeOut = (t: number) => 1 - Math.pow(1 - t, 3)
 
-function buildStyle(): StyleSpecification {
+function buildStyle(basemap: BasemapId): StyleSpecification {
   return {
     version: 8,
     projection: { type: 'globe' },
@@ -41,10 +43,7 @@ function buildStyle(): StyleSpecification {
       'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 9, 0.8, 13, 0],
     },
     sources: {
-      sat: {
-        type: 'raster', tiles: [SAT], tileSize: 256, maxzoom: 18,
-        attribution: 'Imagery © Esri, Maxar, Earthstar Geographics',
-      },
+      ...basemapSources(),
       campus: { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, promoteId: 'id' },
       route: { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, lineMetrics: true },
       'route-walk': { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
@@ -52,11 +51,7 @@ function buildStyle(): StyleSpecification {
     },
     layers: [
       { id: 'bg', type: 'background', paint: { 'background-color': '#05080f' } },
-      {
-        id: 'sat', type: 'raster', source: 'sat',
-        paint: { 'raster-brightness-max': 0.42, 'raster-saturation': -0.55, 'raster-contrast': 0.12, 'raster-fade-duration': 250,
-          'raster-brightness-max-transition': { duration: 1400 }, 'raster-saturation-transition': { duration: 1400 } },
-      },
+      ...basemapLayers(basemap, true),
       {
         id: 'land', type: 'fill', source: 'campus',
         filter: ['all', isPoly, isCat('farm', 'green', 'parking', 'sports'), notHidden],
@@ -106,26 +101,9 @@ function buildStyle(): StyleSpecification {
         },
       },
       {
-        id: 'buildings', type: 'fill-extrusion', source: 'campus',
-        filter: ['all', isPoly, isCat(...EXTRUDED), notHidden],
-        paint: {
-          'fill-extrusion-color': [
-            'case',
-            ['boolean', ['feature-state', 'sel'], false], '#ffffff',
-            ['boolean', ['feature-state', 'hover'], false], '#ffe8b5',
-            catColor,
-          ],
-          'fill-extrusion-height': ['*', ['coalesce', ['get', 'h'], 10], ['global-state', 'grow']],
-          'fill-extrusion-base': ['*', ['coalesce', ['get', 'b'], 0], ['global-state', 'grow']],
-          'fill-extrusion-opacity': 0.9,
-          'fill-extrusion-vertical-gradient': true,
-        },
-      },
-      {
-        // invisible stand-in for buildings drawn as 3D models, so they can still be hovered and picked
+        // buildings are drawn by the 3D layer; this invisible copy is what hover and click pick
         id: 'model-hit', type: 'fill-extrusion', source: 'campus',
         filter: ['all', isPoly, isModelled, notHidden],
-        layout: { visibility: 'none' },
         paint: {
           'fill-extrusion-color': '#000000',
           'fill-extrusion-height': ['*', ['coalesce', ['get', 'h'], 10], ['global-state', 'grow']],
@@ -134,7 +112,7 @@ function buildStyle(): StyleSpecification {
       },
       {
         id: 'buildings-hover', type: 'line', source: 'campus',
-        filter: ['all', isPoly, isCat(...EXTRUDED), notHidden],
+        filter: ['all', isPoly, isModelled, notHidden],
         paint: {
           'line-color': '#ffffff',
           'line-width': ['case', ['boolean', ['feature-state', 'sel'], false], 3, ['boolean', ['feature-state', 'hover'], false], 2, 0],
@@ -217,11 +195,13 @@ export class CampusEngine {
   private anims = new Map<string, number>()
   private orbitRaf = 0
   night = true
+  basemap: BasemapId
 
-  constructor(container: HTMLElement, private ev: EngineEvents, opts: { attribution?: boolean } = {}) {
+  constructor(container: HTMLElement, private ev: EngineEvents, opts: { attribution?: boolean; basemap?: BasemapId } = {}) {
+    this.basemap = opts.basemap ?? DEFAULT_BASEMAP
     this.map = new maplibregl.Map({
       container,
-      style: buildStyle(),
+      style: buildStyle(this.basemap),
       center: [28, 24],
       zoom: 1.6,
       pitch: 0,
@@ -245,6 +225,7 @@ export class CampusEngine {
       if (this.isLoaded) return
       this.isLoaded = true
       if (this.pendingHidden) this.setHidden(this.pendingHidden)
+      applyBasemap(this.map, this.basemap)
       this.loadModels()
       this.readyWaiters.forEach((r) => r())
       this.readyWaiters = []
@@ -273,7 +254,7 @@ export class CampusEngine {
 
   private bind() {
     const m = this.map
-    const layers = ['buildings', 'model-hit']
+    const layers = ['model-hit']
     m.on('mousemove', (e) => {
       const f = m.queryRenderedFeatures(e.point, { layers })[0] as unknown as CampusFeature | undefined
       const id = (f?.properties?.id as string) || null
@@ -338,9 +319,6 @@ export class CampusEngine {
     const models = new Buildings3D(this.map)
     // above the ground outline of hovered / selected buildings, so the outline never cuts across a facade
     this.map.addLayer(models.layer, 'points-halo')
-    // swap the plain block for the model, keeping an invisible copy for picking
-    this.map.setFilter('buildings', ['all', isPoly, isCat(...EXTRUDED), notHidden, ['!', isModelled]])
-    this.map.setLayoutProperty('model-hit', 'visibility', 'visible')
     models.setNight(this.night)
     models.setHidden((this.map.getGlobalState().hidden as string[] | undefined) ?? [])
     if (this.lastData) models.setData(this.lastData)
@@ -366,18 +344,21 @@ export class CampusEngine {
     this.models?.setHidden(hidden)
   }
 
+  /** switch the base map under the campus (satellite, streets, topo, …) */
+  setBasemap(id: BasemapId) {
+    this.basemap = id
+    if (this.isLoaded) applyBasemap(this.map, id)
+  }
+
   setNight(night: boolean) {
     this.night = night
     if (!this.isLoaded) return
     const m = this.map
-    m.setPaintProperty('sat', 'raster-brightness-max', night ? 0.42 : 1)
-    m.setPaintProperty('sat', 'raster-saturation', night ? -0.55 : 0.05)
-    m.setPaintProperty('sat', 'raster-contrast', night ? 0.12 : 0.05)
+    applyBasemapTone(m, night)
     m.setPaintProperty('light-heat', 'heatmap-opacity', night ? 0.85 : 0)
     m.setPaintProperty('lights', 'circle-color', night ? '#fff4d6' : '#ffb020')
     m.setPaintProperty('road-glow', 'line-opacity', ['*', night ? 0.45 : 0.12, ['global-state', 'grow']])
     m.setPaintProperty('road', 'line-color', night ? '#bdf0ff' : '#ffffff')
-    m.setPaintProperty('buildings', 'fill-extrusion-opacity', night ? 0.9 : 0.94)
     this.models?.setNight(night)
     m.setSky(night
       ? { 'sky-color': '#061024', 'horizon-color': '#1d3a6b', 'fog-color': '#0a1530', 'fog-ground-blend': 0.4, 'horizon-fog-blend': 0.6, 'sky-horizon-blend': 0.6, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 9, 0.8, 13, 0] }
@@ -401,7 +382,7 @@ export class CampusEngine {
     await new Promise<void>((res) => {
       const t0 = performance.now()
       const spin = (t: number) => {
-        const k = (t - t0) / 1800
+        const k = (t - t0) / INTRO_MS.spin
         m.jumpTo({ center: [28 + k * 4, 24 + k * 1.2] })
         if (k < 1) requestAnimationFrame(spin)
         else res()
@@ -411,14 +392,14 @@ export class CampusEngine {
     await new Promise<void>((res) => {
       m.flyTo({
         center: CAMPUS_CENTER, zoom: 16.15, pitch: 62, bearing: -32,
-        duration: 7200, curve: 1.55, essential: true,
+        duration: INTRO_MS.dive, curve: 1.55, essential: true,
         easing: (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2),
       })
       m.once('moveend', () => res())
     })
     onArrive()
-    await this.tween('grow', 1, 1800, easeInOut)
-    await this.tween('lights', 1, 2200, easeInOut)
+    await this.tween('grow', 1, INTRO_MS.grow, easeInOut)
+    await this.tween('lights', 1, INTRO_MS.lights, easeInOut)
   }
 
   skipIntro() {

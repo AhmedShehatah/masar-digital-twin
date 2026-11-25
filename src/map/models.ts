@@ -1,5 +1,5 @@
 /**
- * Buildings drawn as detailed 3D models instead of plain extrusions, keyed by profile.
+ * Buildings drawn as detailed 3D models, keyed by profile.
  * Kept free of three.js so the engine can read it without loading the 3D code.
  *
  * Facade styles, painted per storey:
@@ -130,8 +130,7 @@ function designB(plaster: string, band: string, base: string, frame: string, cop
 }
 
 export const MODELLED = Object.keys(MODEL_SPECS)
-/** whole categories drawn by the 3D layer (src/map/props3d.ts) instead of extrusions */
-/** every extruded category is now drawn in 3D: photographed models, category styles, or props */
+/** building categories drawn by the 3D layer: photographed models, category styles, or props (src/map/props3d.ts) */
 export const MODELLED_CATS = ['faculty', 'lecture', 'admin', 'housing', 'mosque', 'service', 'cafe', 'kiosk', 'caravan', 'construction', 'building', 'canopy']
 
 // ---------- every other building: a style per category, fitted to the building's own height ----------

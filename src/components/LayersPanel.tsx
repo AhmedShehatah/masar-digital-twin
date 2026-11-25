@@ -2,6 +2,7 @@ import { X, Eye, EyeOff } from 'lucide-react'
 import type { Dispatch, SetStateAction } from 'react'
 import { CAT_META, fmt, type AnalysisIndex, type AnalysisState, type Campus, type Cat, type Year } from '../data'
 import { AnalysisSection } from './AnalysisSection'
+import { BASEMAPS, type BasemapId } from '../map/basemaps'
 
 const GROUPS: { key: 'build' | 'infra' | 'land'; title: string }[] = [
   { key: 'build', title: 'المباني والمنشآت' },
@@ -9,8 +10,9 @@ const GROUPS: { key: 'build' | 'infra' | 'land'; title: string }[] = [
   { key: 'land', title: 'الأرض والمساحات' },
 ]
 
-export function LayersPanel({ fc, hidden, setHidden, onClose, analysis, ana, setAna, year, onYear }: {
+export function LayersPanel({ fc, hidden, setHidden, onClose, basemap, setBasemap, analysis, ana, setAna, year, onYear }: {
   fc: Campus; hidden: Cat[]; setHidden: (h: Cat[]) => void; onClose: () => void
+  basemap: BasemapId; setBasemap: (b: BasemapId) => void
   analysis: AnalysisIndex | null; ana: AnalysisState; setAna: Dispatch<SetStateAction<AnalysisState>>
   year: Year; onYear: (y: Year) => void
 }) {
@@ -28,6 +30,14 @@ export function LayersPanel({ fc, hidden, setHidden, onClose, analysis, ana, set
           </button>
           <button className="tool" onClick={onClose}><X size={16} /></button>
         </div>
+      </div>
+      <div className="group-t">الخريطة الأساسية</div>
+      <div className="ana-grid">
+        {BASEMAPS.map((b) => (
+          <button key={b.id} className={`ana-pill ${basemap === b.id ? 'on' : ''}`} aria-pressed={basemap === b.id} onClick={() => setBasemap(b.id)}>
+            <i style={{ background: b.swatch }} /><span className="pill-t">{b.label}</span>
+          </button>
+        ))}
       </div>
       {GROUPS.map((g) => {
         const cats = (Object.keys(CAT_META) as Cat[]).filter((c) => CAT_META[c].group === g.key && counts.get(c))

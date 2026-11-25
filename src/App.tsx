@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'
 import { AnimatePresence } from 'motion/react'
-import { Search, Layers, BarChart3, Moon, Sun, Clapperboard, Navigation, Images } from 'lucide-react'
+import { Search, Layers, BarChart3, Moon, Sun, Clapperboard, Navigation, Images, Users } from 'lucide-react'
 import { CampusEngine } from './map/engine'
+import { introMusic } from './voice/introMusic'
+import { DEFAULT_BASEMAP, isBasemap, type BasemapId } from './map/basemaps'
 import {
   YEARS, loadYear, loadProfiles, loadStats, loadAnalysis, rasterFrame, centroid, norm, ANALYSIS_OFF,
   type AnalysisIndex, type AnalysisState, type Campus, type CampusFeature, type Cat, type Profile, type Stats, type Year,
@@ -19,9 +21,18 @@ import { Assistant } from './components/Assistant'
 import { CompareView, CompareBar } from './components/Compare'
 import { Directions, endpointFor, type Endpoint } from './components/Directions'
 import { Gallery } from './components/Gallery'
+import { Team } from './components/Team'
 import type { Intent, RouteTarget } from './voice/intents'
 
 type Phase = 'loading' | 'intro' | 'arrive' | 'ready'
+
+/** the campus animation made in Revit, hosted on YouTube */
+const REVIT_VIDEO = 'https://youtu.be/rz2ZdWoGuWQ'
+
+const BASEMAP_KEY = 'masar.basemap'
+const savedBasemap = (): BasemapId => {
+  try { const v = localStorage.getItem(BASEMAP_KEY); return isBasemap(v) ? v : DEFAULT_BASEMAP } catch { return DEFAULT_BASEMAP }
+}
 export interface Selection { feature: CampusFeature; room?: string }
 export type { Cam } from './useCam'
 
@@ -30,12 +41,16 @@ export default function App() {
   const engine = useRef<CampusEngine | null>(null)
   const markers = useRef<maplibregl.Marker[]>([])
   const [phase, setPhase] = useState<Phase>('loading')
+  const [loaded, setLoaded] = useState(false)
+  const [entered, setEntered] = useState(false)
+  const introStarted = useRef(false)
   const [year, setYear] = useState<Year>(2026)
   const [data, setData] = useState<Partial<Record<Year, Campus>>>({})
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [night, setNight] = useState(false) // light (day) mode by default; the moon button switches to night
   const [hidden, setHidden] = useState<Cat[]>([])
+  const [basemap, setBasemap] = useState<BasemapId>(savedBasemap)
   const [analysis, setAnalysis] = useState<AnalysisIndex | null>(null)
   const [ana, setAna] = useState<AnalysisState>(ANALYSIS_OFF)
   const [panel, setPanel] = useState<'layers' | 'stats' | null>(null)
@@ -48,6 +63,7 @@ export default function App() {
   const [playing, setPlaying] = useState(false)
   const [compare, setCompare] = useState<Year | null>(null)
   const [gallery, setGallery] = useState(() => new URLSearchParams(location.search).has('gallery'))
+  const [team, setTeam] = useState(() => new URLSearchParams(location.search).has('team'))
   const [narrow, setNarrow] = useState(() => window.innerWidth < 860)
   useEffect(() => {
     const on = () => setNarrow(window.innerWidth < 860)
@@ -99,10 +115,7 @@ export default function App() {
       if (new URLSearchParams(location.search).has('skip')) {
         eng.skipIntro(); eng.setNight(false); setPhase('ready')
       } else {
-        setPhase('intro')
-        eng.intro(() => setPhase('arrive')).then(() => {
-        window.setTimeout(() => setPhase((p) => (p === 'arrive' ? 'ready' : p)), 2600)
-      })
+        setLoaded(true) // the intro starts once the visitor has entered (with or without sound)
       }
       YEARS.forEach((y) => loadYear(y).then((c) => setData((d) => ({ ...d, [y]: c }))))
       loadAnalysis().then(setAnalysis).catch(() => undefined)
@@ -111,7 +124,25 @@ export default function App() {
     return () => { cancelled = true; eng.destroy() }
   }, [])
 
+  // ---------- opening: enter screen, then the intro with its music ----------
+  useEffect(() => {
+    const eng = engine.current
+    if (!loaded || !entered || !eng || introStarted.current) return
+    introStarted.current = true
+    setPhase('intro')
+    void introMusic.start()
+    eng.intro(() => setPhase('arrive')).then(() => {
+      window.setTimeout(() => setPhase((p) => (p === 'arrive' ? 'ready' : p)), 2600)
+    })
+  }, [loaded, entered])
+  useEffect(() => { if (phase === 'ready') introMusic.finish() }, [phase])
+  const enter = useCallback((sound: boolean) => {
+    if (sound) introMusic.unlock() // must run inside the click for the browser to allow audio
+    setEntered(true)
+  }, [])
+
   const skip = useCallback(() => {
+    introMusic.stop()
     engine.current?.skipIntro()
     setPhase('ready')
   }, [])
@@ -143,6 +174,10 @@ export default function App() {
 
   // ---------- engine sync ----------
   useEffect(() => { engine.current?.setHidden(hidden) }, [hidden])
+  useEffect(() => {
+    engine.current?.setBasemap(basemap)
+    try { localStorage.setItem(BASEMAP_KEY, basemap) } catch { /* private mode: the choice just isn't remembered */ }
+  }, [basemap])
   useEffect(() => { if (phase === 'ready' || phase === 'arrive') engine.current?.setNight(night) }, [night, phase])
   useEffect(() => { engine.current?.select(sel?.feature.properties.id ?? null) }, [sel])
 
@@ -254,6 +289,11 @@ export default function App() {
     setGallery(true)
   }, [])
 
+  const openTeam = useCallback(() => {
+    setSel(null); setPanel(null); setPlaying(false); setSearchOpen(false); setTouring(false)
+    setTeam(true)
+  }, [])
+
   const onIntent = useCallback((i: Intent) => {
     switch (i.kind) {
       case 'goto':
@@ -297,7 +337,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', h)
   }, [searchOpen, touring])
 
-  const ready = phase === 'ready' && !touring && !gallery
+  const ready = phase === 'ready' && !touring && !gallery && !team
   const hoverName = hover && (hover.f.properties.p ? profileMap.get(hover.f.properties.p as string)?.name : (hover.f.properties.n as string | undefined))
 
   return (
@@ -306,7 +346,7 @@ export default function App() {
       <div className={`map-wrap ${labelsOn ? '' : 'lbls-off'}`}><div id="map" ref={mapEl} /></div>
       <div className="vignette" />
 
-      {phase === 'loading' && <Loader />}
+      {phase === 'loading' && <Loader loaded={loaded} entered={entered} onEnter={enter} />}
       {phase === 'intro' && <Intro engine={eng} onSkip={skip} />}
       {phase === 'arrive' && <Arrival stats={stats} onSkip={skip} />}
 
@@ -331,9 +371,19 @@ export default function App() {
           <button className="tool gallery-btn" onClick={openGallery} title="معرض الخرائط: أطلس سينمائي لخرائط الحرم">
             <Images size={17} /><span className="lbl-t">المعرض</span>
           </button>
+          <button className="tool team-btn" onClick={openTeam} title="فريق العمل: صُنّاع مسار">
+            <Users size={17} /><span className="lbl-t">فريق العمل</span>
+          </button>
           <button className="tool film-btn" onClick={startFilm} title="الفيلم: جولة سينمائية بالموسيقى والترجمة">
             <Clapperboard size={17} /><span className="lbl-t">شاهد الفيلم</span>
           </button>
+          <a className="tool yt-btn" href={REVIT_VIDEO} target="_blank" rel="noopener noreferrer" title="فيديو الأنيميشن المصمم على Revit (يفتح في يوتيوب)">
+            <svg className="yt-logo" viewBox="0 0 28 20" width={22} height={16} aria-hidden="true">
+              <rect width="28" height="20" rx="5" fill="#ff0033" />
+              <path d="M11.2 5.6v8.8l7.6-4.4z" fill="#fff" />
+            </svg>
+            <span className="lbl-t">فيديو Revit</span>
+          </a>
           <button className={`tool ${panel === 'stats' ? 'on' : ''}`} onClick={() => { setPanel((p) => (p === 'stats' ? null : 'stats')); setSel(null) }} title="الأرقام">
             <BarChart3 size={17} /><span className="lbl-t">الأرقام</span>
           </button>
@@ -347,7 +397,7 @@ export default function App() {
       </header>
 
       {ready && panel === 'layers' && current && (
-        <LayersPanel fc={current} hidden={hidden} setHidden={setHidden} onClose={() => setPanel(null)}
+        <LayersPanel fc={current} hidden={hidden} setHidden={setHidden} onClose={() => setPanel(null)} basemap={basemap} setBasemap={setBasemap}
           analysis={analysis} ana={ana} setAna={setAna} year={year} onYear={(y) => { setPlaying(false); switchYear(y) }} />
       )}
       {ready && panel === 'stats' && stats && !sel && <StatsPanel stats={stats} year={year} onClose={() => setPanel(null)} />}
@@ -388,7 +438,7 @@ export default function App() {
 
       {ready && compare && eng && (
         <>
-          <CompareView main={eng} left={compare} right={year} night={night} hidden={hidden} />
+          <CompareView main={eng} left={compare} right={year} night={night} hidden={hidden} basemap={basemap} />
           <CompareBar left={compare} right={year} stats={stats} onLeft={setCompare}
             onRight={(y) => switchYear(y)} onExit={() => setCompare(null)} />
         </>
@@ -414,6 +464,9 @@ export default function App() {
 
       <AnimatePresence>
         {phase === 'ready' && gallery && <Gallery onClose={() => setGallery(false)} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {phase === 'ready' && team && <Team onClose={() => setTeam(false)} />}
       </AnimatePresence>
 
       {searchOpen && (
