@@ -41,9 +41,6 @@ export default function App() {
   const engine = useRef<CampusEngine | null>(null)
   const markers = useRef<maplibregl.Marker[]>([])
   const [phase, setPhase] = useState<Phase>('loading')
-  const [loaded, setLoaded] = useState(false)
-  const [entered, setEntered] = useState(false)
-  const introStarted = useRef(false)
   const [year, setYear] = useState<Year>(2026)
   const [data, setData] = useState<Partial<Record<Year, Campus>>>({})
   const [profiles, setProfiles] = useState<Profile[]>([])
@@ -107,15 +104,21 @@ export default function App() {
     engine.current = eng
     setEng(eng)
     let cancelled = false
+    const skipIntro = new URLSearchParams(location.search).has('skip')
+    if (!skipIntro) introMusic.prepare() // download the music while the satellite loads
     Promise.all([eng.ready().then(() => eng.tilesReady()), loadYear(2026), loadProfiles(), loadStats()]).then(([, fc, pr, st]) => {
       if (cancelled) return
       setProfiles(pr); setStats(st)
       setData((d) => ({ ...d, 2026: fc }))
       eng.setData(fc)
-      if (new URLSearchParams(location.search).has('skip')) {
+      if (skipIntro) {
         eng.skipIntro(); eng.setNight(false); setPhase('ready')
       } else {
-        setLoaded(true) // the intro starts once the visitor has entered (with or without sound)
+        setPhase('intro')
+        void introMusic.start()
+        eng.intro(() => setPhase('arrive')).then(() => {
+          window.setTimeout(() => setPhase((p) => (p === 'arrive' ? 'ready' : p)), 2600)
+        })
       }
       YEARS.forEach((y) => loadYear(y).then((c) => setData((d) => ({ ...d, [y]: c }))))
       loadAnalysis().then(setAnalysis).catch(() => undefined)
@@ -124,22 +127,8 @@ export default function App() {
     return () => { cancelled = true; eng.destroy() }
   }, [])
 
-  // ---------- opening: enter screen, then the intro with its music ----------
-  useEffect(() => {
-    const eng = engine.current
-    if (!loaded || !entered || !eng || introStarted.current) return
-    introStarted.current = true
-    setPhase('intro')
-    void introMusic.start()
-    eng.intro(() => setPhase('arrive')).then(() => {
-      window.setTimeout(() => setPhase((p) => (p === 'arrive' ? 'ready' : p)), 2600)
-    })
-  }, [loaded, entered])
+  // the intro music fades out as the map takes over
   useEffect(() => { if (phase === 'ready') introMusic.finish() }, [phase])
-  const enter = useCallback((sound: boolean) => {
-    if (sound) introMusic.unlock() // must run inside the click for the browser to allow audio
-    setEntered(true)
-  }, [])
 
   const skip = useCallback(() => {
     introMusic.stop()
@@ -346,7 +335,7 @@ export default function App() {
       <div className={`map-wrap ${labelsOn ? '' : 'lbls-off'}`}><div id="map" ref={mapEl} /></div>
       <div className="vignette" />
 
-      {phase === 'loading' && <Loader loaded={loaded} entered={entered} onEnter={enter} />}
+      {phase === 'loading' && <Loader />}
       {phase === 'intro' && <Intro engine={eng} onSkip={skip} />}
       {phase === 'arrive' && <Arrival stats={stats} onSkip={skip} />}
 
