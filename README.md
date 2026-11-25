@@ -52,6 +52,7 @@ The atlas (`?gallery`) gets its maps from the shared Google Drive folder "Final 
 4. writes them to `public/images/maps/` and the list to `src/gallery/images.gen.json` (both git-ignored).
 
 Maps that are not in Drive (solar radiation, stop order, closest facility) live in `assets/maps-local/`.
+The building elevations of the last chapter, "واجهات الحرم", are in `assets/maps-local/facades/`; add one with a `facade(...)` line in `catalog.ts`.
 
 **Adding or changing a map**
 

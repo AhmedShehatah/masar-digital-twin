@@ -18,7 +18,6 @@ export interface FilmCtx {
 interface Shot { center: [number, number]; zoom: number; pitch: number; bearing: number; drift?: number; dz?: number }
 interface Card { title: string; items: string[] }
 interface Chapter {
-  kicker: string
   title: string
   say: string
   shot: Shot
@@ -27,8 +26,6 @@ interface Chapter {
   /** runs while the subtitles play; gets their expected duration */
   action?: (ms: number, alive: () => boolean) => Promise<void> | void
 }
-
-const KICKERS = ['المقدمة', 'الفصل الأول', 'الفصل الثاني', 'الفصل الثالث', 'الفصل الرابع', 'الفصل الخامس', 'الفصل السادس', 'الفصل السابع', 'الفصل الثامن', 'الخاتمة']
 
 const avg = (fs: CampusFeature[]): [number, number] | null => {
   if (!fs.length) return null
@@ -50,12 +47,12 @@ function buildScript(ctx: FilmCtx): Chapter[] {
 
   const ch: (Chapter | null)[] = []
   ch.push({
-    kicker: '', title: 'مسار',
+    title: 'مسار',
     say: 'مرحبًا بكم في مسار، التوأم الرقمي لحرم جامعة سوهاج الجديدة في الكوامل. ما تشاهدونه ليس صورة، بل نسخة رقمية حيّة من الحرم، مبنًى بمبنى، وعمودًا بعمود.',
     shot: { center: CAMPUS_CENTER, zoom: 14.7, pitch: 38, bearing: 10, drift: -30, dz: 0.5 },
   })
   ch.push({
-    kicker: '', title: 'من الأرشيف إلى الخريطة',
+    title: 'من الأرشيف إلى الخريطة',
     say: 'بدأت الحكاية بخمسة ملفات رفع مساحي بصيغة أوتوكاد، لخمس محطات زمنية من 2006 إلى 2026. حوّلناها إلى خرائط جغرافية دقيقة، واستخرجنا منها أسماء المباني وارتفاعاتها وتصنيفاتها.',
     shot: { center: CAMPUS_CENTER, zoom: 15.2, pitch: 52, bearing: -20, drift: 18, dz: 0.2 },
     card: { title: 'ملفات المصدر', items: YEARS.map((y) => `${y}.dwg`) },
@@ -68,7 +65,7 @@ function buildScript(ctx: FilmCtx): Chapter[] {
     },
   })
   ch.push({
-    kicker: '', title: 'عشرون عامًا من النمو',
+    title: 'عشرون عامًا من النمو',
     say: `في 2006 لم يكن هنا سوى حدود مرسومة على الرمال. وفي 2011 ارتفعت أولى الكليات، ومعها ${poles11} عمود إنارة. واليوم يضم الحرم ${poles26} عمودًا، وأكثر من ${Math.floor(s26.roadKm)} كيلومترًا من الطرق.`,
     shot: { center: CAMPUS_CENTER, zoom: 15.6, pitch: 66, bearing: -45, drift: 40, dz: 0.3 },
     card: { title: 'بالأرقام', items: [`${fmt(poles26)} عمود إنارة`, `${fmt(s26.roadKm, 1)} كم طرق`, `${fmt(s26.features)} عنصر مكاني`, '5 محطات زمنية'] },
@@ -81,7 +78,7 @@ function buildScript(ctx: FilmCtx): Chapter[] {
   })
   const fac = avg(by((f) => ['كلية الهندسة', 'كلية الآداب', 'كلية التجارة', 'كلية التربية'].includes(f.properties.p ?? '')))
   if (fac) ch.push({
-    kicker: '', title: 'محور الكليات',
+    title: 'محور الكليات',
     say: 'في قلب الحرم تصطف أربع كليات توأم: الهندسة والآداب والتجارة والتربية. كل مبنى منها بطول 71 مترًا وعرض 116 مترًا، ويرتفع 30 مترًا، تمامًا كما في القياسات الأصلية.',
     shot: { center: fac, zoom: 16.9, pitch: 66, bearing: 25, drift: 35, dz: 0.25 },
     card: { title: 'القياسات الأصلية', items: ['الطول 71 م', 'العرض 116 م', 'الارتفاع 30 م'] },
@@ -89,7 +86,7 @@ function buildScript(ctx: FilmCtx): Chapter[] {
   const dent = by((f) => f.properties.p === 'كلية طب الأسنان')
   const dc = avg(dent)
   if (dc) ch.push({
-    kicker: '', title: 'داخل المباني',
+    title: 'داخل المباني',
     say: `ولم نتوقف عند الشكل الخارجي. لكل مبنى أدواره ومحتوياته. كلية طب الأسنان مثلًا تضم ${dentP?.floors.length ?? 6} أدوار و${dentRooms} مساحة، من العيادات التشخيصية إلى معامل الأشعة، ويمكنك البحث عن أي غرفة باسمها.`,
     shot: { center: dc, zoom: 17.9, pitch: 68, bearing: -40, drift: 50, dz: 0.2 },
     card: { title: `كلية طب الأسنان · ${dentRooms} مساحة`, items: dentSample },
@@ -101,25 +98,25 @@ function buildScript(ctx: FilmCtx): Chapter[] {
   const hc = hall ? centroid(hall.geometry) : null
   const mos = hc ? avg(mosAll.filter((f) => { const c = centroid(f.geometry); return Math.hypot((c[0] - hc[0]) * 99700, (c[1] - hc[1]) * 110540) < 60 })) : null
   if (mos) ch.push({
-    kicker: '', title: 'المساجد',
+    title: 'المساجد',
     say: 'المسجدان مرسومان بتفاصيلهما المعمارية: قاعة الصلاة، والقبة، والمئذنة، وغرفة الوضوء، كلٌّ بارتفاعه.',
     shot: { center: mos, zoom: 18.6, pitch: 58, bearing: 30, drift: 70, dz: 0.1 },
     action: () => engine.select(null),
   })
   const hou = avg(by((f) => f.properties.c === 'housing'))
   if (hou) ch.push({
-    kicker: '', title: 'المدينة الجامعية',
+    title: 'المدينة الجامعية',
     say: 'وعلى أطراف الحرم تقف المدينة الجامعية، عمارات لسكن الطالبات وأعضاء هيئة التدريس، بارتفاعات تصل إلى 25 مترًا.',
     shot: { center: hou, zoom: 16.6, pitch: 62, bearing: -70, drift: -35, dz: 0.3 },
   })
   const fm = avg(farm)
   if (fm) ch.push({
-    kicker: '', title: 'مزرعة كلية الزراعة',
+    title: 'مزرعة كلية الزراعة',
     say: `وفي الشمال تمتد مزرعة كلية الزراعة، ${farm.length} قطعة تحوّل الصحراء إلى حقل للتجارب.`,
     shot: { center: fm, zoom: 15.5, pitch: 55, bearing: 10, drift: -25, dz: 0.3 },
   })
   ch.push({
-    kicker: '', title: 'الحرم ليلًا',
+    title: 'الحرم ليلًا',
     say: `وحين يحلّ الليل، تضيء الحرم شبكة من ${poles26} عمود إنارة، كل عمود منها في موقعه الحقيقي.`,
     shot: { center: CAMPUS_CENTER, zoom: 15.9, pitch: 70, bearing: -30, drift: 70, dz: 0.2 },
     night: true,
@@ -130,11 +127,11 @@ function buildScript(ctx: FilmCtx): Chapter[] {
     },
   })
   ch.push({
-    kicker: '', title: 'الحرم بين يديك',
+    title: 'الحرم بين يديك',
     say: 'هذا هو مسار. الحرم الآن بين يديك: ابحث عن أي قاعة، وتنقّل عبر عشرين عامًا من الزمن، أو اسأل المساعد الصوتي. أهلًا بك.',
     shot: { center: CAMPUS_CENTER, zoom: 15.1, pitch: 50, bearing: -25, drift: -20, dz: -0.3 },
   })
-  return ch.filter(Boolean).map((c, i, a) => ({ ...(c as Chapter), kicker: i === a.length - 1 ? KICKERS[9] : KICKERS[i] }))
+  return ch.filter(Boolean) as Chapter[]
 }
 
 export function Film({ ctx, onEnd }: { ctx: FilmCtx; onEnd: () => void }) {
@@ -244,7 +241,6 @@ export function Film({ ctx, onEnd }: { ctx: FilmCtx; onEnd: () => void }) {
           <motion.div key={`t${idx}`} className="chapter" style={{ x: '-50%' }}
             initial={{ opacity: 0, y: 24, filter: 'blur(12px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
             exit={{ opacity: 0, y: -16, filter: 'blur(10px)' }} transition={{ duration: 0.9, ease: 'easeOut' }}>
-            <div className="kicker">{c.kicker}</div>
             <h2>{c.title}</h2>
             <motion.i className="rule" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.3, duration: 1.2 }} />
           </motion.div>
@@ -287,7 +283,7 @@ export function Film({ ctx, onEnd }: { ctx: FilmCtx; onEnd: () => void }) {
       <div className="film-ctrls">
         <div className="dots">{script.map((_, i) => <i key={i} className={i < idx ? 'done' : i === idx ? 'on' : ''} />)}</div>
         <button onClick={togglePause} title="إيقاف مؤقت (مسافة)">{paused ? <Play size={16} /> : <Pause size={16} />}</button>
-        <button onClick={next} title="الفصل التالي">{<SkipForward size={16} style={{ transform: 'scaleX(-1)' }} />}</button>
+        <button onClick={next} title="المشهد التالي">{<SkipForward size={16} style={{ transform: 'scaleX(-1)' }} />}</button>
         <button onClick={toggleMute} title="الموسيقى">{muted ? <VolumeX size={16} /> : <Volume2 size={16} />}</button>
         <button onClick={() => onEndRef.current()} title="إنهاء"><X size={16} /></button>
       </div>

@@ -3,10 +3,10 @@
  * (see scripts/sync-maps.ts); captions and camera focus live here. Imports nothing so Node can load it.
  */
 
-export type ChapterId = 'land' | 'climate' | 'change' | 'veg' | 'campus' | 'model3d'
+export type ChapterId = 'land' | 'climate' | 'change' | 'veg' | 'campus' | 'model3d' | 'facades'
 export type VegIndex = 'NDVI' | 'SAVI' | 'CCI'
 
-export interface Chapter { id: ChapterId; kicker: string; title: string; sub: string }
+export interface Chapter { id: ChapterId; title: string; sub: string }
 
 export interface Entry {
   key: string
@@ -30,12 +30,13 @@ export interface Entry {
 }
 
 export const CHAPTERS: Chapter[] = [
-  { id: 'land', kicker: 'الفصل الأول', title: 'المكان', sub: 'أين يقع الحرم، وعلى أي أرض يقوم: الصخر والتربة والتضاريس ومجاري السيول' },
-  { id: 'climate', kicker: 'الفصل الثاني', title: 'المناخ', sub: 'الحرارة والرطوبة والرياح والشمس، وحرارة سطح الأرض في فصول السنة' },
-  { id: 'change', kicker: 'الفصل الثالث', title: 'عشرون عامًا من التحوّل', sub: 'من مزرعة وأرض فضاء إلى حرم جامعي، من صور جوجل إيرث والأقمار الصناعية' },
-  { id: 'veg', kicker: 'الفصل الرابع', title: 'عشرون عامًا من الخُضرة', sub: 'ثلاثة مؤشرات نباتية من صور الأقمار الصناعية' },
-  { id: 'campus', kicker: 'الفصل الخامس', title: 'الحرم تحت المجهر', sub: 'تحليلات مكانية وشبكية لحرم جامعة سوهاج الجديدة' },
-  { id: 'model3d', kicker: 'الفصل السادس', title: 'الحرم مجسّمًا', sub: 'مشاهد ثلاثية الأبعاد للمباني والطرق والمساحات الخضراء عبر السنين' },
+  { id: 'land', title: 'المكان', sub: 'أين يقع الحرم، وعلى أي أرض يقوم: الصخر والتربة والتضاريس ومجاري السيول' },
+  { id: 'climate', title: 'المناخ', sub: 'الحرارة والرطوبة والرياح والشمس، وحرارة سطح الأرض في فصول السنة' },
+  { id: 'change', title: 'عشرون عامًا من التحوّل', sub: 'من مزرعة وأرض فضاء إلى حرم جامعي، من صور جوجل إيرث والأقمار الصناعية' },
+  { id: 'veg', title: 'عشرون عامًا من الخُضرة', sub: 'ثلاثة مؤشرات نباتية من صور الأقمار الصناعية' },
+  { id: 'campus', title: 'الحرم تحت المجهر', sub: 'تحليلات مكانية وشبكية لحرم جامعة سوهاج الجديدة' },
+  { id: 'model3d', title: 'الحرم مجسّمًا', sub: 'مشاهد ثلاثية الأبعاد للمباني والطرق والمساحات الخضراء عبر السنين' },
+  { id: 'facades', title: 'واجهات الحرم', sub: 'واجهات الكليات والسكن والخدمات كما رُسمت في النموذج المعماري' },
 ]
 
 const TOPO = 'تحليل طبوغرافي'
@@ -50,6 +51,10 @@ const VEG_YEAR_NOTES: Record<number, string> = {
 }
 const veg = (index: VegIndex, title: string, desc: string): Entry =>
   ({ key: index.toLowerCase(), chapter: 'veg', mode: 'years', from: `مؤشرات/${index}`, title, short: index, desc, yearNotes: VEG_YEAR_NOTES, focus: [27, 40], index })
+
+/** an architectural elevation from the 3D model, kept in assets/maps-local/facades (not in Drive) */
+const facade = (key: string, title: string, short: string, desc: string): Entry =>
+  ({ key: `facade-${key}`, chapter: 'facades', mode: 'single', from: `local:facades/${key}.jpg`, title, short, desc, kind: 'render', focus: [50, 50] })
 
 export const ENTRIES: Entry[] = [
   // ---------- المكان ----------
@@ -122,4 +127,34 @@ export const ENTRIES: Entry[] = [
   // ---------- مجسّمًا ----------
   { key: 'model', chapter: 'model3d', mode: 'all', from: 'رفع ثلاثي الابعاد', title: 'الحرم مجسّمًا', short: 'مجسّم', kind: 'render', focus: [50, 50],
     desc: 'مشهد ثلاثي الأبعاد للحرم: المباني والطرق والمساحات الخضراء كما كانت في تلك السنة.' },
+
+  // ---------- الواجهات (assets/maps-local/facades) ----------
+  facade('exams-center', 'مركز الاختبارات الإلكترونية', 'الاختبارات الإلكترونية',
+    'ستة طوابق حول برج دائري أحمر، وبوابة كبيرة تحمل اسم المبنى أمام المدخل.'),
+  facade('computers', 'كلية الحاسبات والمعلومات والذكاء الاصطناعي', 'الحاسبات',
+    'جناحان من ستة طوابق يحيطان بكتلة وسطى بشرفات حمراء، والمدخل تحت بوابة تحمل اسم الكلية.'),
+  facade('engineering', 'كلية الهندسة', 'الهندسة',
+    'واجهة طويلة من ستة طوابق بإطار بارز حول النوافذ الوسطى، وسلالم دائرية بشرفات على الطرفين.'),
+  facade('commerce', 'كلية التجارة', 'التجارة',
+    'واجهة من ستة طوابق بإطار بارز يحمل اسم الكلية فوق المدخلين، وأجنحة بشرفات على الجانبين.'),
+  facade('education', 'كلية التربية', 'التربية',
+    'واجهة متناظرة بإطار بارز فوق المدخلين، وسلالم دائرية بارزة في الجناحين.'),
+  facade('arts', 'كلية الآداب', 'الآداب',
+    'واجهة من ستة طوابق بإطار بارز يحمل اسم الكلية، وسلالم دائرية بشرفات على الطرفين.'),
+  facade('dentistry', 'كلية طب الفم والأسنان', 'طب الأسنان',
+    'كتلة وسطى بشرفات حمراء يعلوها اسم الكلية، وجناحان بأقواس طويلة تمتد على ستة طوابق.'),
+  facade('housing-balconies', 'مبنى سكني بالشرفات', 'مبنى بالشرفات',
+    'ستة طوابق من الشرفات المتكررة حول برج سلالم دائري في الوسط.'),
+  facade('housing-blocks', 'عمارات بشرفات دائرية', 'عمارات متجاورة',
+    'عمارات متجاورة من ستة طوابق، لكل منها مدخل وشرفات دائرية حمراء عند الأركان.'),
+  facade('six-storey', 'مبنى من ستة طوابق', 'مبنى ستة طوابق',
+    'واجهة من ستة طوابق بجزء منحنٍ في الوسط فوق المدخل.'),
+  facade('orange-blocks', 'مبانٍ بأشرطة برتقالية', 'الأشرطة البرتقالية',
+    'مجموعة مبانٍ بأشرطة برتقالية وأبراج سلالم مشبّكة، ومدخل في الكتلة الوسطى.'),
+  facade('mosque-wing', 'مبنى بجوار المسجد', 'بجوار المسجد',
+    'مبنى ممتد من ثلاثة طوابق بأبراج زجاجية، وتظهر مآذن المسجد في طرفه.'),
+  facade('college-court', 'ساحة بين الكليات', 'ساحة الكليات',
+    'مبانٍ من ستة طوابق تحيط بساحة مفتوحة تنتهي بمدخل كلية في صدرها.'),
+  facade('sports-courts', 'الملاعب', 'الملاعب',
+    'ملاعب مسوّرة بين مبنى من ستة طوابق ومبنى من طابقين، كما تبدو من الطريق.'),
 ]

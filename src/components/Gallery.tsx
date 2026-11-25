@@ -132,7 +132,7 @@ export function Gallery({ onClose }: { onClose: () => void }) {
         <AnimatePresence mode="wait">
           <motion.div key={shot.id} className="g-cap"
             initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.5 }}>
-            <div className="g-kicker">{chapter.kicker} · {chapter.title}</div>
+            <div className="g-kicker">{chapter.title}</div>
             <h2>
               {shot.title}
               {shot.year && <span className="g-year num"> {shot.year}</span>}
@@ -212,7 +212,6 @@ export function Gallery({ onClose }: { onClose: () => void }) {
             <motion.div key={card} className="g-card" onClick={() => setCard(null)}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.7 }}>
               {card === CHAPTERS[0].id && <motion.div className="g-card-pre" initial={{ opacity: 0, letterSpacing: '0.9em' }} animate={{ opacity: 1, letterSpacing: '0.5em' }} transition={{ duration: 1.8 }}>MASAR · ATLAS</motion.div>}
-              <motion.div className="g-card-k" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8 }}>{c.kicker}</motion.div>
               <motion.h1 initial={{ opacity: 0, y: 24, filter: 'blur(12px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} transition={{ delay: 0.35, duration: 1.1, ease: [0.2, 0.7, 0.2, 1] }}>{c.title}</motion.h1>
               <motion.span className="g-card-rule" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.8, duration: 1 }} />
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.1, duration: 0.8 }}>{c.sub}</motion.p>
@@ -229,7 +228,7 @@ export function Gallery({ onClose }: { onClose: () => void }) {
             <div className="g-grid-in">
               {CHAPTERS.map((c) => (
                 <section key={c.id}>
-                  <h3><small>{c.kicker}</small>{c.title}</h3>
+                  <h3>{c.title}</h3>
                   <div className="g-tiles">
                     {SHOTS.filter((s) => s.chapter === c.id).map((s, k) => (
                       <motion.button key={s.id} className={`g-tile ${s.id === shot.id ? 'on' : ''}`}
