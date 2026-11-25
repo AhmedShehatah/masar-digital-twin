@@ -3,7 +3,6 @@ import * as maplibregl from 'maplibre-gl'
 import { AnimatePresence } from 'motion/react'
 import { Search, Layers, BarChart3, Moon, Sun, Clapperboard, Navigation, Images, Users } from 'lucide-react'
 import { CampusEngine } from './map/engine'
-import { introMusic } from './voice/introMusic'
 import { DEFAULT_BASEMAP, isBasemap, type BasemapId } from './map/basemaps'
 import {
   YEARS, loadYear, loadProfiles, loadStats, loadAnalysis, rasterFrame, centroid, norm, ANALYSIS_OFF,
@@ -105,7 +104,6 @@ export default function App() {
     setEng(eng)
     let cancelled = false
     const skipIntro = new URLSearchParams(location.search).has('skip')
-    if (!skipIntro) introMusic.prepare() // download the music while the satellite loads
     Promise.all([eng.ready().then(() => eng.tilesReady()), loadYear(2026), loadProfiles(), loadStats()]).then(([, fc, pr, st]) => {
       if (cancelled) return
       setProfiles(pr); setStats(st)
@@ -115,7 +113,6 @@ export default function App() {
         eng.skipIntro(); eng.setNight(false); setPhase('ready')
       } else {
         setPhase('intro')
-        void introMusic.start()
         eng.intro(() => setPhase('arrive')).then(() => {
           window.setTimeout(() => setPhase((p) => (p === 'arrive' ? 'ready' : p)), 2600)
         })
@@ -127,11 +124,7 @@ export default function App() {
     return () => { cancelled = true; eng.destroy() }
   }, [])
 
-  // the intro music fades out as the map takes over
-  useEffect(() => { if (phase === 'ready') introMusic.finish() }, [phase])
-
   const skip = useCallback(() => {
-    introMusic.stop()
     engine.current?.skipIntro()
     setPhase('ready')
   }, [])
