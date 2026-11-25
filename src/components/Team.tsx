@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { motion } from 'motion/react'
 import { Crown, Search, X } from 'lucide-react'
-import { LEADER, MEMBERS, splitName } from '../team'
+import { LEADER, MEMBERS, SUPERVISORS, splitName } from '../team'
 import { norm } from '../data'
 
 const ar = (n: number) => n.toLocaleString('ar-EG')
@@ -51,6 +51,21 @@ export function Team({ onClose }: { onClose: () => void }) {
             <span>جامعة سوهاج الجديدة · <b>{ar(2026)}</b></span>
           </div>
         </motion.header>
+
+        {/* ---------- supervisors ---------- */}
+        <motion.section className="t-sup" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.9, ease: [0.2, 0.7, 0.2, 1] }}>
+          <div className="t-sup-head">تحت إشراف</div>
+          <div className="t-sup-main"><span className="t-sup-title">{SUPERVISORS.main.title}</span>{SUPERVISORS.main.name}</div>
+          <div className="t-sup-row">
+            {SUPERVISORS.others.map((s) => (
+              <div key={s.name} className="t-sup-item">
+                <span className="t-role">{s.role}</span>
+                <div className="t-sup-name"><span className="t-sup-title">{s.title}</span>{s.name}</div>
+              </div>
+            ))}
+          </div>
+        </motion.section>
 
         {/* ---------- leader ---------- */}
         {leaderHit && (

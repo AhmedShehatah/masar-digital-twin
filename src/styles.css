@@ -786,6 +786,15 @@ a.tool { text-decoration: none; }
 .t-hero p { margin: 10px 0 0; color: #cdd6e4; font-size: clamp(14px, 1.6vw, 18px); }
 .t-facts { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 16px; margin-top: 22px; font-size: 13px; color: var(--muted); }
 .t-facts b { font-family: var(--num); color: var(--gold-2); font-weight: 600; font-size: 15px; }
+.t-sup { display: grid; justify-items: center; text-align: center; max-width: 760px; margin: 44px auto 0; padding: 26px 20px 28px; border-radius: 22px;
+  background: linear-gradient(180deg, rgba(245,181,68,.07), rgba(255,255,255,.02)); box-shadow: 0 0 0 1px rgba(245,181,68,.22) inset; }
+.t-sup-head { font-size: 13px; letter-spacing: .14em; color: var(--gold); }
+.t-sup-main { font-family: var(--display); font-size: clamp(24px, 3vw, 34px); font-weight: 600; color: #fff; margin-top: 8px; }
+.t-sup-title { color: var(--gold-2); font-size: .72em; margin-inline-end: 6px; }
+.t-sup-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px 48px; margin-top: 20px; }
+.t-sup-item { display: grid; justify-items: center; }
+.t-sup-item .t-role { margin-top: 0; }
+.t-sup-name { font-family: var(--display); font-size: clamp(18px, 2vw, 22px); font-weight: 600; color: #f3f6fb; margin-top: 10px; }
 .t-facts i { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); opacity: .6; }
 
 /* leader */
